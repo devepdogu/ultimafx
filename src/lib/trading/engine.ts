@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma/client";
 import { Decimal, marketValue } from "@/lib/money/decimal";
 import { resolveAssetPrice } from "@/lib/market-data/resolve-price";
 import type { DataProvenance } from "@/lib/market-data/types";
+import { isAssetSessionOpen, sessionHoursLabel } from "./session";
 import {
   AssetNotTradableError,
+  InsufficientUsdBalanceError,
+  MarketClosedError,
   InsufficientBalanceError,
   InsufficientHoldingsError,
   InvalidQuantityError,
@@ -29,6 +32,7 @@ async function settleTrade(
     userId: string;
     walletId: string;
     cashBalance: Decimal;
+    usdBalance: Decimal;
     asset: Asset;
     orderId: string;
     side: "BUY" | "SELL";
@@ -37,9 +41,13 @@ async function settleTrade(
     provenance: DataProvenance;
   }
 ) {
-  const { userId, walletId, cashBalance, asset, orderId, side, quantity, price, provenance } =
+  const { userId, walletId, cashBalance, usdBalance, asset, orderId, side, quantity, price, provenance } =
     params;
   const total = marketValue(quantity, price, asset.decimalPrecision);
+
+  // An asset is priced and settled in its own currency: USD assets move the USD balance, everything else the TRY balance.
+  const inUsd = asset.currency === "USD";
+  const balance = inUsd ? usdBalance : cashBalance;
 
   const portfolio = await tx.portfolio.findUniqueOrThrow({ where: { userId } });
   const holding = await tx.holding.findUnique({
@@ -47,14 +55,17 @@ async function settleTrade(
   });
 
   if (side === "BUY") {
-    if (cashBalance.lt(total)) throw InsufficientBalanceError();
+    if (balance.lt(total)) throw inUsd ? InsufficientUsdBalanceError() : InsufficientBalanceError();
   } else {
     const heldQty = holding ? new Decimal(holding.quantity.toString()) : new Decimal(0);
     if (heldQty.lt(quantity)) throw InsufficientHoldingsError();
   }
 
-  const newCashBalance = side === "BUY" ? cashBalance.minus(total) : cashBalance.plus(total);
-  await tx.wallet.update({ where: { id: walletId }, data: { cashBalance: newCashBalance.toString() } });
+  const nextBalance = (side === "BUY" ? balance.minus(total) : balance.plus(total)).toString();
+  await tx.wallet.update({
+    where: { id: walletId },
+    data: inUsd ? { usdBalance: nextBalance } : { cashBalance: nextBalance },
+  });
 
   const trade = await tx.trade.create({
     data: {
@@ -73,10 +84,10 @@ async function settleTrade(
       walletId,
       type: side === "BUY" ? "TRADE_BUY" : "TRADE_SELL",
       amount: (side === "BUY" ? total.neg() : total).toString(),
-      balanceAfter: newCashBalance.toString(),
+      balanceAfter: nextBalance,
       referenceType: "TRADE",
       referenceId: trade.id,
-      description: `${side === "BUY" ? "Alış" : "Satış"}: ${quantity.toString()} ${asset.symbol}`,
+      description: `${side === "BUY" ? "Alış" : "Satış"}: ${quantity.toString()} ${asset.symbol}${inUsd ? " (USD)" : ""}`,
     },
   });
 
@@ -129,12 +140,16 @@ async function ensureWalletAndPortfolio(userId: string) {
 }
 
 async function lockWallet(tx: Prisma.TransactionClient, userId: string) {
-  const rows = await tx.$queryRaw<{ id: string; cashBalance: Prisma.Decimal }[]>`
-    SELECT id, "cashBalance" FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE
+  const rows = await tx.$queryRaw<{ id: string; cashBalance: Prisma.Decimal; usdBalance: Prisma.Decimal }[]>`
+    SELECT id, "cashBalance", "usdBalance" FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE
   `;
   const row = rows[0];
   if (!row) throw new TradingError("Cüzdanınız bulunamadı. Lütfen tekrar deneyin.");
-  return { walletId: row.id, cashBalance: new Decimal(row.cashBalance.toString()) };
+  return {
+    walletId: row.id,
+    cashBalance: new Decimal(row.cashBalance.toString()),
+    usdBalance: new Decimal(row.usdBalance.toString()),
+  };
 }
 
 export interface MarketOrderInput {
@@ -163,6 +178,7 @@ export async function executeMarketOrder(input: MarketOrderInput) {
 
   const asset = await prisma.asset.findUniqueOrThrow({ where: { id: input.assetId } });
   if (!asset.isActive || !asset.tradingEnabled) throw AssetNotTradableError();
+  if (!isAssetSessionOpen(asset.type)) throw MarketClosedError(sessionHoursLabel(asset.type));
 
   const resolved = await resolveAssetPrice(asset);
   if (resolved.price == null || resolved.provenance === "UNAVAILABLE") {
@@ -173,7 +189,7 @@ export async function executeMarketOrder(input: MarketOrderInput) {
   await ensureWalletAndPortfolio(input.userId);
 
   return prisma.$transaction(async (tx) => {
-    const { walletId, cashBalance } = await lockWallet(tx, input.userId);
+    const { walletId, cashBalance, usdBalance } = await lockWallet(tx, input.userId);
 
     const order = await tx.order.create({
       data: {
@@ -195,6 +211,7 @@ export async function executeMarketOrder(input: MarketOrderInput) {
       userId: input.userId,
       walletId,
       cashBalance,
+      usdBalance,
       asset,
       orderId: order.id,
       side: input.side,
@@ -221,6 +238,7 @@ export async function placeLimitOrder(input: LimitOrderInput) {
 
   const asset = await prisma.asset.findUniqueOrThrow({ where: { id: input.assetId } });
   if (!asset.isActive || !asset.tradingEnabled) throw AssetNotTradableError();
+  if (!isAssetSessionOpen(asset.type)) throw MarketClosedError(sessionHoursLabel(asset.type));
 
   const resolved = await resolveAssetPrice(asset);
 
@@ -258,12 +276,13 @@ async function fillLimitOrder(order: Order & { asset: Asset }, price: Decimal, p
   const quantity = new Decimal(order.quantity.toString());
 
   await prisma.$transaction(async (tx) => {
-    const { walletId, cashBalance } = await lockWallet(tx, order.userId);
+    const { walletId, cashBalance, usdBalance } = await lockWallet(tx, order.userId);
 
     await settleTrade(tx, {
       userId: order.userId,
       walletId,
       cashBalance,
+      usdBalance,
       asset: order.asset,
       orderId: order.id,
       side: order.side,

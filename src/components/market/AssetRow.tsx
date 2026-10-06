@@ -30,11 +30,13 @@ export function AssetRow({
   asset,
   href,
   trailing,
+  className,
   showChangeAmount = true,
 }: {
   asset: AssetRowData;
   href?: string;
   trailing?: ReactNode;
+  className?: string;
   showChangeAmount?: boolean;
 }) {
   const isNegative = asset.changePercent != null && asset.changePercent < 0;
@@ -42,7 +44,7 @@ export function AssetRow({
     asset.change == null ? null : `${asset.change > 0 ? "+" : ""}${priceFormatter.format(asset.change)}`;
 
   const content = (
-    <div className="flex items-center border-b border-[#C4D3E5] px-4 py-3">
+    <div className={cn("flex items-center border-b border-[#C4D3E5] py-3", className)}>
       <AssetIcon symbol={asset.symbol} type={asset.type} logoUrl={asset.logoUrl} size={36} className="mr-2.5" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14px] font-bold leading-[18px] text-foreground">{asset.name}</div>

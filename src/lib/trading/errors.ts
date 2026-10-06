@@ -8,6 +8,9 @@ export class TradingError extends Error {
 export const InsufficientBalanceError = () =>
   new TradingError("Yetersiz bakiye. Lütfen tutarı kontrol edin.");
 
+export const InsufficientUsdBalanceError = () =>
+  new TradingError("Yetersiz dolar bakiyesi. Bu varlık dolar ile alınır; önce TL'yi dolara çevirin.");
+
 export const InsufficientHoldingsError = () =>
   new TradingError("Yetersiz miktar. Elinizdeki miktardan fazlasını satamazsınız.");
 
@@ -21,3 +24,10 @@ export const InvalidQuantityError = () =>
 
 export const AssetNotTradableError = () =>
   new TradingError("Bu varlık şu anda işleme kapalı.");
+
+export const MarketClosedError = (hours: string | null) =>
+  new TradingError(
+    hours
+      ? `Piyasa şu anda kapalı. Bu varlıkta emir yalnızca seans saatlerinde verilebilir: ${hours}.`
+      : "Piyasa şu anda kapalı."
+  );

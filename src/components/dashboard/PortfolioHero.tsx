@@ -10,7 +10,7 @@ export async function PortfolioHero({ summary }: { summary: PortfolioSummary }) 
   return (
     <Card elevated className="relative overflow-hidden">
       <div className="label-eyebrow">{t("totalPortfolio")}</div>
-      <div className="num-tabular figure-hero mt-1">{formatPrice(summary.totalValue.toNumber())}</div>
+      <div className="num-tabular figure-hero mt-1">{formatPrice(summary.totalValue.toDecimalPlaces(2).toNumber())}</div>
 
       <div
         className={`num-tabular mt-1 inline-flex items-center gap-1 text-sm font-semibold ${
@@ -18,7 +18,7 @@ export async function PortfolioHero({ summary }: { summary: PortfolioSummary }) 
         }`}
       >
         {isNegative ? "" : "+"}
-        {formatPrice(summary.totalPnl.toNumber())}
+        {formatPrice(summary.totalPnl.toDecimalPlaces(2).toNumber())}
         <span className="text-xs font-medium text-muted">{t("totalGain")}</span>
       </div>
 

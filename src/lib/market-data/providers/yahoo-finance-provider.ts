@@ -66,7 +66,15 @@ export abstract class YahooFinanceProvider extends UnimplementedProviderBase {
       }
 
       const lastPrice: number = meta.regularMarketPrice;
-      const previousClose: number | null = meta.regularMarketPreviousClose ?? null;
+      const dailyCloses: (number | null)[] = result?.indicators?.quote?.[0]?.close ?? [];
+      const dailyOpens: (number | null)[] = result?.indicators?.quote?.[0]?.open ?? [];
+      const lastValid = (arr: (number | null)[]) => [...arr].reverse().find((v) => v != null) ?? null;
+      const previousCloseFromBars =
+        dailyCloses.filter((v) => v != null).length >= 2
+          ? (dailyCloses.filter((v) => v != null) as number[]).at(-2) ?? null
+          : null;
+      const previousClose: number | null = meta.regularMarketPreviousClose ?? previousCloseFromBars;
+      const sessionOpen = lastValid(dailyOpens);
       const change = previousClose != null ? lastPrice - previousClose : null;
       const changePercent =
         meta.regularMarketChangePercent ??
@@ -78,7 +86,7 @@ export abstract class YahooFinanceProvider extends UnimplementedProviderBase {
         previousClose,
         change,
         changePercent,
-        open: null,
+        open: sessionOpen,
         high: meta.regularMarketDayHigh ?? null,
         low: meta.regularMarketDayLow ?? null,
         volume: meta.regularMarketVolume ?? null,

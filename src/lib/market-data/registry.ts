@@ -1,7 +1,7 @@
 import type { MarketDataProvider } from "./provider";
 import { UnconfiguredProvider } from "./providers/unconfigured-provider";
 import { TCMBProvider } from "./providers/tcmb-provider";
-import { TruncgilProvider } from "./providers/truncgil-provider";
+import { CommodityProvider } from "./providers/commodity-provider";
 import { YahooFinanceBistProvider } from "./providers/yahoo-bist-provider";
 import { YahooFinanceUsProvider } from "./providers/yahoo-us-provider";
 import { withCache } from "./cached-provider";
@@ -59,7 +59,7 @@ marketDataRegistry.register("CURRENCY", withCache(new TCMBProvider()));
 // 5 minutes internally, so this doesn't add upstream load, it just re-checks
 // that in-process value more often instead of pinning a Redis-cached read
 // for up to 10 minutes after it goes stale.
-marketDataRegistry.register("COMMODITY", withCache(new TruncgilProvider(), { quoteTtlSeconds: 30 }));
+marketDataRegistry.register("COMMODITY", withCache(new CommodityProvider(), { quoteTtlSeconds: 15 }));
 
 // Individual BIST equities AND the BIST 100 index both go through Yahoo
 // Finance's public chart endpoint — see yahoo-bist-provider.ts for exactly
@@ -70,7 +70,7 @@ marketDataRegistry.register("COMMODITY", withCache(new TruncgilProvider(), { quo
 // never provided for the index — so this is also what makes the BIST 100
 // chart real instead of permanently empty. A 45s Redis TTL keeps quotes
 // feeling current without re-hitting Yahoo on every page view.
-const yahooBist = withCache(new YahooFinanceBistProvider(), { quoteTtlSeconds: 45 });
+const yahooBist = withCache(new YahooFinanceBistProvider(), { quoteTtlSeconds: 15 });
 marketDataRegistry.register("STOCK", yahooBist);
 marketDataRegistry.register("INDEX", yahooBist);
-marketDataRegistry.register("US_STOCK", withCache(new YahooFinanceUsProvider(), { quoteTtlSeconds: 45 }));
+marketDataRegistry.register("US_STOCK", withCache(new YahooFinanceUsProvider(), { quoteTtlSeconds: 15 }));

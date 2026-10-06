@@ -150,6 +150,26 @@ enum WalletTransactionType {
   TRADE_BUY
   /// Internal sell settlement — credits cash when a simulated trade executes.
   TRADE_SELL
+  /// Principal moved from cash into a term deposit account.
+  TERM_DEPOSIT_OPEN
+  /// Principal plus interest credited back when a term deposit matures.
+  TERM_DEPOSIT_PAYOUT
+  /// TRY ↔ USD conversion at the USDTRY rate. Amount is the TRY-side movement.
+  FX_CONVERSION
+  /// Cash moved into an investment fund at its unit price.
+  FUND_PURCHASE
+  /// Units sold back from an investment fund; cash credited at the unit price.
+  FUND_REDEMPTION
+}
+
+enum TermDepositStatus {
+  ACTIVE
+  MATURED
+}
+
+enum WalletMethod {
+  BANK_TRANSFER
+  CRYPTO
 }
 
 enum DepositStatus {
@@ -220,28 +240,35 @@ enum BankAccountStatus {
 // =========================================================================
 
 model User {
-  id            String     @id @default(cuid())
-  email         String?    @unique
-  emailVerified DateTime?
-  phone         String?    @unique
-  tcKimlikHash  String?    @unique
+  id              String     @id @default(cuid())
+  email           String?    @unique
+  emailVerified   DateTime?
+  phone           String?    @unique
+  tcKimlikHash    String?    @unique
   termsAcceptedAt DateTime?
   kvkkAcceptedAt  DateTime?
-  passwordHash  String?
-  name          String?
-  image         String?
-  locale        String     @default("tr")
-  referralCode  String?    @unique
-  referredById  String?
-  status        UserStatus @default(PENDING_VERIFICATION)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  passwordHash    String?
+  name            String?
+  image           String?
+  gender          String?
+  birthDate       DateTime?
+  city            String?
+  country         String?
+  locale          String     @default("tr")
+  referralCode    String?    @unique
+  referredById    String?
+  status          UserStatus @default(PENDING_VERIFICATION)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  roles    UserRole[]
-  accounts Account[]
-  sessions Session[]
+  roles        UserRole[]
+  fundHoldings FundHolding[]
+  kycDocuments KycDocument[]
+  accounts     Account[]
+  sessions     Session[]
 
   portfolio            Portfolio?
+  termDeposits         TermDepositAccount[]
   wallet               Wallet?
   watchlists           Watchlist[]
   priceAlerts          PriceAlert[]
@@ -250,9 +277,9 @@ model User {
   notifications        Notification[]
   deposits             Deposit[]
   withdrawals          Withdrawal[]
-  auditLogs            AuditLog[]     @relation("AuditLogActor")
-  processedDeposits    Deposit[]      @relation("DepositProcessedBy")
-  processedWithdrawals Withdrawal[]   @relation("WithdrawalProcessedBy")
+  auditLogs            AuditLog[]           @relation("AuditLogActor")
+  processedDeposits    Deposit[]            @relation("DepositProcessedBy")
+  processedWithdrawals Withdrawal[]         @relation("WithdrawalProcessedBy")
 
   @@index([status])
 }
@@ -565,6 +592,8 @@ model Wallet {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   cashBalance    Decimal  @default(0) @db.Decimal(24, 6)
+  /// USD balance held in the same wallet (funds USD term deposits; filled by TRY→USD conversion).
+  usdBalance     Decimal  @default(0) @db.Decimal(24, 6)
   pendingBalance Decimal  @default(0) @db.Decimal(24, 6)
   currency       String   @default("TRY")
   updatedAt      DateTime @updatedAt
@@ -583,6 +612,8 @@ model WalletTransaction {
   referenceType String?
   referenceId   String?
   description   String?
+  /// Structured details for the history view (e.g. FX: from/to amounts and rate). Null for older rows.
+  metadata      Json?
   createdAt     DateTime              @default(now())
 
   @@index([walletId, createdAt])
@@ -721,6 +752,14 @@ model IPO {
   status                IPOStatus @default(UPCOMING)
   officialSourceUrl     String?
   documents             Json?
+  /// Demand as a percent of the offering, from the IPO source (e.g. 44.4).
+  demandRatio           Decimal?  @db.Decimal(10, 2)
+  applicationCount      Int?
+  totalDemand           Decimal?  @db.Decimal(24, 2)
+  intermediary          String?
+  maxLotPerUser         Int?
+  minAmountTry          Decimal?  @db.Decimal(20, 2)
+  lotSize               Int?
 
   isPublished Boolean @default(false)
   isFeatured  Boolean @default(false)
@@ -799,6 +838,7 @@ model BankAccount {
   accountHolder String
   currency      String            @default("TRY")
   instructions  String?
+  logoUrl       String?
   status        BankAccountStatus @default(ACTIVE)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -807,11 +847,14 @@ model BankAccount {
 }
 
 model Deposit {
-  id            String       @id @default(cuid())
-  userId        String
-  user          User         @relation(fields: [userId], references: [id])
-  bankAccountId String?
-  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  method          WalletMethod   @default(BANK_TRANSFER)
+  bankAccountId   String?
+  bankAccount     BankAccount?   @relation(fields: [bankAccountId], references: [id])
+  cryptoAddressId String?
+  cryptoAddress   CryptoAddress? @relation(fields: [cryptoAddressId], references: [id])
 
   amount    Decimal       @db.Decimal(24, 6)
   currency  String        @default("TRY")
@@ -836,9 +879,13 @@ model Withdrawal {
 
   amount                   Decimal          @db.Decimal(24, 6)
   currency                 String           @default("TRY")
-  destinationIban          String
-  destinationBankName      String
-  destinationAccountHolder String
+  method                   WalletMethod     @default(BANK_TRANSFER)
+  reference                String?
+  destinationIban          String?
+  destinationBankName      String?
+  destinationAccountHolder String?
+  destinationAddress       String?
+  destinationNetwork       String?
   status                   WithdrawalStatus @default(PENDING)
 
   requestedAt        DateTime  @default(now())
@@ -968,24 +1015,24 @@ model Banner {
   @@index([isActive, position])
 }
 
-
 model InvestmentFund {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String
   companyName   String
   category      String
   description   String?
   risk          Int
-  unitPrice     Decimal? @db.Decimal(18, 6)
-  currency      String   @default("TRY")
-  ytdReturn     Decimal? @db.Decimal(8, 2)
-  oneYearReturn Decimal? @db.Decimal(8, 2)
-  aum           Decimal? @db.Decimal(20, 2)
+  unitPrice     Decimal?      @db.Decimal(18, 6)
+  currency      String        @default("TRY")
+  ytdReturn     Decimal?      @db.Decimal(8, 2)
+  oneYearReturn Decimal?      @db.Decimal(8, 2)
+  aum           Decimal?      @db.Decimal(20, 2)
   investorCount Int?
-  position      Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  position      Int           @default(0)
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  fundHoldings  FundHolding[]
 
   @@index([isActive, position])
 }
@@ -995,4 +1042,114 @@ model SiteSettings {
   siteName  String   @default("Ultima FX")
   logoUrl   String?
   updatedAt DateTime @updatedAt
+}
+
+model TermDepositProduct {
+  id         String               @id @default(cuid())
+  accounts   TermDepositAccount[]
+  currency   String               @default("TRY")
+  termDays   Int
+  annualRate Decimal              @db.Decimal(8, 4)
+  minAmount  Decimal              @db.Decimal(20, 2)
+  position   Int                  @default(0)
+  isActive   Boolean              @default(true)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([isActive, currency, position])
+}
+
+model TermDepositAccount {
+  id         String             @id @default(cuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId  String
+  product    TermDepositProduct @relation(fields: [productId], references: [id])
+  currency   String             @default("TRY")
+  principal  Decimal            @db.Decimal(24, 6)
+  annualRate Decimal            @db.Decimal(8, 4)
+  termDays   Int
+  interest   Decimal            @db.Decimal(24, 6)
+  openedAt   DateTime           @default(now())
+  maturesAt  DateTime
+  status     TermDepositStatus  @default(ACTIVE)
+  settledAt  DateTime?
+
+  @@index([userId, status])
+  @@index([status, maturesAt])
+}
+
+model CryptoAddress {
+  id        String   @id @default(cuid())
+  asset     String   @default("USDT")
+  network   String
+  address   String
+  label     String
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deposits Deposit[]
+
+  @@index([isActive, position])
+}
+
+/// Units a user holds in one investment fund. Cost is the TRY amount paid, for profit/loss.
+model FundHolding {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fundId    String
+  fund      InvestmentFund @relation(fields: [fundId], references: [id])
+  units     Decimal        @db.Decimal(18, 6)
+  costTry   Decimal        @db.Decimal(20, 6)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([userId, fundId])
+}
+
+/// Identity document uploaded for KYC. Stored in the database; one file per side.
+model KycDocument {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  side         String
+  fileName     String
+  mimeType     String
+  data         Bytes
+  /// PENDING until an admin reviews it; APPROVED or REJECTED after review.
+  reviewStatus String   @default("PENDING")
+  reviewNote   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, side])
+}
+
+enum CampaignStatus {
+  ACTIVE
+  UPCOMING
+  ENDED
+}
+
+/// Campaign and reward program card shown on the Kampanyalar (rewards) page.
+model Campaign {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  tagline     String
+  description String
+  rewardLabel String
+  category    String
+  status      CampaignStatus @default(ACTIVE)
+  isFeatured  Boolean        @default(false)
+  isActive    Boolean        @default(true)
+  position    Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([isActive, position])
 }

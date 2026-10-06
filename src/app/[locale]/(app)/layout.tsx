@@ -1,6 +1,7 @@
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { AutoRefresh } from "@/components/layout/AutoRefresh";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { getCurrentUser } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
@@ -42,6 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <main className="flex-1 pb-16 md:pb-0">{children}</main>
         </div>
       </div>
+      <AutoRefresh />
       <BottomNav />
     </QueryProvider>
   );

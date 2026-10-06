@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { IconButton } from "@/components/ui/IconButton";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 const THEME_CHANGE_EVENT = "ultima-theme-change";
 
@@ -14,7 +14,7 @@ function subscribe(callback: () => void) {
 }
 
 /** Reads the resolved theme straight off the DOM — the root layout's inline
- * bootstrap script (and `toggle()` below) are the only things that ever set
+ * bootstrap script (and `setTheme()` below) are the only things that ever set
  * `data-theme`, so this is always in sync with what's actually rendered. */
 function getSnapshot(): Theme {
   const attr = document.documentElement.getAttribute("data-theme");
@@ -26,22 +26,29 @@ function getServerSnapshot(): Theme {
   return "dark";
 }
 
-export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+/** Current resolved theme; re-renders when the theme changes anywhere on the page. */
+export function useTheme(): Theme {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    try {
-      localStorage.setItem("ultima-theme", next);
-    } catch {
-      // Best-effort — a blocked localStorage just means the choice won't persist.
-    }
-    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+export function setTheme(next: Theme) {
+  document.documentElement.setAttribute("data-theme", next);
+  try {
+    localStorage.setItem("ultima-theme", next);
+  } catch {
+    // Best-effort — a blocked localStorage just means the choice won't persist.
   }
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+}
+
+export function ThemeToggle() {
+  const theme = useTheme();
 
   return (
-    <IconButton label={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"} onClick={toggle}>
+    <IconButton
+      label={theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç"}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    >
       {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
     </IconButton>
   );

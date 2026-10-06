@@ -40,6 +40,149 @@ const ROLES: { key: string; name: string; permissions: readonly string[] }[] = [
   { key: "USER", name: "Kullanıcı", permissions: [] },
 ];
 
+/** Investment funds from the yatirim-fon mock. Idempotent: matched by name, so re-running updates values in place. */
+const INVESTMENT_FUNDS: {
+  name: string;
+  companyName: string;
+  category: string;
+  description: string;
+  risk: number;
+  unitPrice: string;
+  ytdReturn: string;
+  oneYearReturn: string;
+  aum: number;
+  investorCount: number;
+}[] = [
+  { name: "AK PORTFÖY YENİ TEKNOLOJİLER YABANCI HİSSE SENEDİ FONU", companyName: "Ak Portföy Yönetimi A.Ş.", category: "Yabancı", description: "Nasdaq ve küresel teknoloji devlerine yatırım yapan, Türkiye'nin en büyük yabancı hisse senedi fonlarından.", risk: 6, unitPrice: "1.0746", ytdReturn: "25.42", oneYearReturn: "33.10", aum: 19_000_000_000, investorCount: 131149 },
+  { name: "İŞ PORTFÖY BIST TEKNOLOJİ AĞIRLIK SINIRLAMALI ENDEKSİ HİSSE SENEDİ (TL) FONU (HİSSE SENEDİ YOĞUN FON)", companyName: "İş Portföy Yönetimi A.Ş.", category: "Sektörel", description: "BIST Teknoloji endeksini takip eden, yerli teknoloji şirketlerine odaklanan endeks fonu.", risk: 7, unitPrice: "1.2082", ytdReturn: "20.26", oneYearReturn: "15.00", aum: 2_400_000_000, investorCount: 40112 },
+  { name: "AK PORTFÖY ALTIN FONU", companyName: "Ak Portföy Yönetimi A.Ş.", category: "Altın", description: "Fiziki altın ve altına dayalı araçlarla enflasyona karşı koruma sağlayan altın fonu.", risk: 4, unitPrice: "1.2928", ytdReturn: "5.92", oneYearReturn: "13.20", aum: 18_200_000_000, investorCount: 79087 },
+  { name: "MARMARA CAPITAL PORTFÖY HİSSE SENEDİ (TL) FONU (HİSSE SENEDİ YOĞUN FON)", companyName: "Marmara Capital Portföy Yönetimi A.Ş.", category: "Hisse Senedi", description: "Değer yatırımı stratejisiyle yönetilen, uzun vadeli getiri hedefleyen aktif hisse senedi fonu.", risk: 6, unitPrice: "0.6915", ytdReturn: "2.96", oneYearReturn: "7.50", aum: 3_700_000_000, investorCount: 31890 },
+  { name: "NEO PORTFÖY BİRİNCİ PARA PİYASASI FONU", companyName: "Neo Portföy Yönetimi A.Ş.", category: "Para Piyasası", description: "Kısa vadeli para piyasası araçlarıyla düşük riskli, istikrarlı günlük getiri hedefler.", risk: 1, unitPrice: "5.8398", ytdReturn: "33.74", oneYearReturn: "46.40", aum: 2_500_000_000, investorCount: 2442 },
+  { name: "ZİRAAT PORTFÖY KISA VADELİ KİRA SERTİFİKASI KATILIM (TL) FONU", companyName: "Ziraat Portföy Yönetimi A.Ş.", category: "Kira Sertifikası", description: "Faizsiz finans ilkelerine uygun kısa vadeli kira sertifikalarına yatırım yapan katılım fonu.", risk: 2, unitPrice: "8.7996", ytdReturn: "31.16", oneYearReturn: "42.50", aum: 25_800_000_000, investorCount: 31010 },
+  { name: "AZİMUT PYŞ BİRİNCİ HİSSE SENEDİ FONU (HİSSE SENEDİ YOĞUN FON)", companyName: "Azimut Portföy Yönetimi A.Ş.", category: "Hisse Senedi", description: "Azimut'un küresel tecrübesiyle yönetilen, seçilmiş BIST hisselerine odaklı fon.", risk: 6, unitPrice: "1443.5641", ytdReturn: "21.16", oneYearReturn: "31.00", aum: 1_200_000_000, investorCount: 925 },
+  { name: "İŞ PORTFÖY HİSSE SENEDİ (TL) FONU (HİSSE SENEDİ YOĞUN FON)", companyName: "İş Portföy Yönetimi A.Ş.", category: "Hisse Senedi", description: "BIST'in köklü şirketlerinden oluşan, Türkiye'nin en eski hisse senedi fonlarından.", risk: 6, unitPrice: "0.1221", ytdReturn: "10.46", oneYearReturn: "17.40", aum: 3_000_000_000, investorCount: 19148 },
+  { name: "YAPI KREDİ PORTFÖY KOÇ HOLDİNG İŞTİRAK VE HİSSE SENEDİ FONU(HİSSE SENEDİ YOĞUN FON)", companyName: "Yapı Kredi Portföy Yönetimi A.Ş.", category: "Hisse Senedi", description: "Koç Holding iştiraklerine ve BIST hisselerine yatırım yapan iştirak fonu.", risk: 6, unitPrice: "14.6406", ytdReturn: "10.39", oneYearReturn: "11.30", aum: 5_900_000_000, investorCount: 58563 },
+  { name: "GARANTİ PORTFÖY ALTIN FONU", companyName: "Garanti Portföy Yönetimi A.Ş.", category: "Altın", description: "Altın ve kıymetli madenlere dayalı sermaye piyasası araçlarına yatırım yapar.", risk: 4, unitPrice: "1.5577", ytdReturn: "5.96", oneYearReturn: "14.50", aum: 23_300_000_000, investorCount: 72801 },
+];
+
+async function seedInvestmentFunds() {
+  for (const [position, fund] of INVESTMENT_FUNDS.entries()) {
+    const data = {
+      companyName: fund.companyName,
+      category: fund.category,
+      description: fund.description,
+      risk: fund.risk,
+      unitPrice: fund.unitPrice,
+      currency: "TRY",
+      ytdReturn: fund.ytdReturn,
+      oneYearReturn: fund.oneYearReturn,
+      aum: fund.aum,
+      investorCount: fund.investorCount,
+      position,
+      isActive: true,
+    };
+    const existing = await prisma.investmentFund.findFirst({ where: { name: fund.name }, select: { id: true } });
+    if (existing) await prisma.investmentFund.update({ where: { id: existing.id }, data });
+    else await prisma.investmentFund.create({ data: { ...data, name: fund.name } });
+  }
+  console.log(`Seeded ${INVESTMENT_FUNDS.length} investment funds.`);
+}
+
+/** Kampanyalar from the odul mock, in the mock's order. Matched by slug so re-running updates in place. */
+const CAMPAIGNS: {
+  slug: string;
+  title: string;
+  tagline: string;
+  description: string;
+  rewardLabel: string;
+  category: string;
+  status: "ACTIVE" | "UPCOMING";
+  isFeatured?: boolean;
+}[] = [
+  {
+    slug: "hos-geldin-bonusu",
+    title: "Hoş Geldin Bonusu",
+    tagline: "Yeni yatırımcılara özel",
+    description: "Ultima FX ailesine katılan yeni yatırımcılarımıza özel fırsat: İlk para yatırma işleminize %10 oranında, 5.000 ₺'ye varan hoş geldin bonusu tanımlanır. Bonus tutarı, yatırımınız hesabınıza geçtiği anda otomatik olarak yüklenir.",
+    rewardLabel: "5.000 ₺'ye varan",
+    category: "Hoş geldin",
+    status: "ACTIVE",
+  },
+  {
+    slug: "islem-hacmi-odul-programi",
+    title: "İşlem Hacmi Ödül Programı",
+    tagline: "Aktif yatırımcılara aylık ödül",
+    description: "Ay içerisinde 250.000 ₺ ve üzeri işlem hacmine ulaşan yatırımcılarımıza, hacim kademelerine göre 2.500 ₺'ye varan nakit ödül tanımlanır. Ödüller her ayın ilk iş günü hesabınıza yansıtılır.",
+    rewardLabel: "2.500 ₺'ye varan",
+    category: "İşlem hacmi",
+    status: "ACTIVE",
+    isFeatured: true,
+  },
+  {
+    slug: "vip-ayricaliklar-programi",
+    title: "VIP Ayrıcalıklar Programı",
+    tagline: "Seçkin yatırımcılara özel hizmet",
+    description: "Portföy büyüklüğü 1.000.000 ₺ üzerindeki yatırımcılarımız VIP statüsüne yükseltilir: Düşürülmüş spread oranları, özel piyasa analiz raporları, kişiye özel portföy danışmanı ve öncelikli 7/24 destek hattı ayrıcalıklarından yararlanır.",
+    rewardLabel: "VIP Statü",
+    category: "VIP",
+    status: "ACTIVE",
+  },
+  {
+    slug: "sadakat-programi",
+    title: "Sadakat Programı",
+    tagline: "Düzenli girişlere aylık ödül",
+    description: "Platformumuza 30 gün kesintisiz giriş yapan yatırımcılarımıza ay sonunda 250 ₺ sadakat ödülü tanımlanır. Seriniz bozulmadan devam ettiği her ay ödül tutarınız %10 artarak birikir.",
+    rewardLabel: "250 ₺ / ay",
+    category: "Sadakat",
+    status: "ACTIVE",
+  },
+  {
+    slug: "yatirimci-akademisi",
+    title: "Yatırımcı Akademisi",
+    tagline: "Öğrenin, uygulayın, kazanın",
+    description: "Ultima FX Akademisi'ndeki temel ve ileri seviye eğitim serilerini tamamlayan yatırımcılarımıza 500 ₺ eğitim bonusu tanımlanır. Eğitimler; temel analiz, teknik analiz ve risk yönetimi modüllerinden oluşur.",
+    rewardLabel: "500 ₺",
+    category: "Eğitim",
+    status: "ACTIVE",
+  },
+  {
+    slug: "yatirim-bonusu",
+    title: "Yatırım Bonusu",
+    tagline: "Yüksek tutarlı yatırımlara ek kazanç",
+    description: "25.000 ₺ ve üzeri para yatırma işlemlerinize %5 oranında, 7.500 ₺'ye varan ek yatırım bonusu tanımlanır. Bonus, yatırım tutarınızla birlikte anında kullanılabilir bakiyenize eklenir.",
+    rewardLabel: "7.500 ₺'ye varan",
+    category: "Yatırım bonusu",
+    status: "ACTIVE",
+  },
+  {
+    slug: "demo-hesap-yarismasi",
+    title: "Demo Hesap Yarışması",
+    tagline: "Risksiz yarış, gerçek ödül",
+    description: "Sanal bakiye ile gerçek piyasa koşullarında yatırım yapın: Yarışma dönemi sonunda en yüksek getiriyi elde eden ilk 10 yatırımcıya toplam 100.000 ₺ ödül havuzundan pay dağıtılır. Birinciye 25.000 ₺ nakit ödül hesabına tanımlanır.",
+    rewardLabel: "25.000 ₺",
+    category: "Yarışma",
+    status: "UPCOMING",
+  },
+];
+
+async function seedCampaigns() {
+  for (const [position, c] of CAMPAIGNS.entries()) {
+    const data = {
+      title: c.title,
+      tagline: c.tagline,
+      description: c.description,
+      rewardLabel: c.rewardLabel,
+      category: c.category,
+      status: c.status,
+      isFeatured: c.isFeatured ?? false,
+      isActive: true,
+      position,
+    };
+    await prisma.campaign.upsert({ where: { slug: c.slug }, create: { ...data, slug: c.slug }, update: data });
+  }
+  console.log(`Seeded ${CAMPAIGNS.length} campaigns.`);
+}
+
 async function main() {
   if (process.env.NODE_ENV === "production") {
     throw new Error("Refusing to run seed data against a production environment.");
@@ -93,6 +236,24 @@ async function main() {
     { symbol: "USDTRY", name: "ABD Doları / Türk Lirası" },
     { symbol: "EURTRY", name: "Euro / Türk Lirası" },
     { symbol: "GBPTRY", name: "İngiliz Sterlini / Türk Lirası" },
+    { symbol: "AUDTRY", name: "Avustralya Doları / Türk Lirası" },
+    { symbol: "CADTRY", name: "Kanada Doları / Türk Lirası" },
+    { symbol: "CHFTRY", name: "İsviçre Frangı / Türk Lirası" },
+    { symbol: "DKKTRY", name: "Danimarka Kronu / Türk Lirası" },
+    { symbol: "SEKTRY", name: "İsveç Kronu / Türk Lirası" },
+    { symbol: "NOKTRY", name: "Norveç Kronu / Türk Lirası" },
+    { symbol: "SARTRY", name: "Suudi Riyali / Türk Lirası" },
+    { symbol: "JPYTRY", name: "Japon Yeni / Türk Lirası" },
+    { symbol: "RONTRY", name: "Romanya Leyi / Türk Lirası" },
+    { symbol: "RUBTRY", name: "Rus Rublesi / Türk Lirası" },
+    { symbol: "CNYTRY", name: "Çin Yuanı / Türk Lirası" },
+    { symbol: "PKRTRY", name: "Pakistan Rupisi / Türk Lirası" },
+    { symbol: "QARTRY", name: "Katar Riyali / Türk Lirası" },
+    { symbol: "KRWTRY", name: "Güney Kore Wonu / Türk Lirası" },
+    { symbol: "AZNTRY", name: "Azerbaycan Manatı / Türk Lirası" },
+    { symbol: "AEDTRY", name: "BAE Dirhemi / Türk Lirası" },
+    { symbol: "KWDTRY", name: "Kuveyt Dinarı / Türk Lirası" },
+    { symbol: "KZTTRY", name: "Kazakistan Tengesi / Türk Lirası" },
   ];
   for (const pair of fxPairs) {
     await prisma.asset.upsert({
@@ -118,6 +279,16 @@ async function main() {
     { symbol: "CEYREKALTIN", name: "Çeyrek Altın", currency: "TRY", decimalPrecision: 2 },
     { symbol: "ONSALTIN", name: "Ons Altın", currency: "USD", decimalPrecision: 2 },
     { symbol: "GUMUS", name: "Gram Gümüş", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "GRAMHASALTIN", name: "Gram Has Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "YARIMALTIN", name: "Yarım Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "TAMALTIN", name: "Tam Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "CUMHURIYETALTINI", name: "Cumhuriyet Altını", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "ATAALTIN", name: "Ata Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "AYAR14ALTIN", name: "14 Ayar Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "AYAR18ALTIN", name: "18 Ayar Altın", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "AYAR22BILEZIK", name: "22 Ayar Bilezik", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "GRAMPLATIN", name: "Gram Platin", currency: "TRY", decimalPrecision: 2 },
+    { symbol: "GRAMPALADYUM", name: "Gram Paladyum", currency: "TRY", decimalPrecision: 2 },
   ];
   for (const c of commodities) {
     await prisma.asset.upsert({
@@ -154,6 +325,16 @@ async function main() {
       visibility: "PUBLIC",
     },
   });
+
+  // Additional BIST index levels (Yahoo .IS symbols). Display-only, like XU100.
+  const indexes = [{ symbol: "XU030", name: "BIST 30" }, { symbol: "XU050", name: "BIST 50" }, { symbol: "XBANK", name: "BIST Banka" }, { symbol: "XUSIN", name: "BIST Sınai" }, { symbol: "XUTUM", name: "BIST Tüm" }];
+  for (const idx of indexes) {
+    await prisma.asset.upsert({
+      where: { symbol: idx.symbol },
+      update: {},
+      create: { symbol: idx.symbol, name: idx.name, type: "INDEX", currency: "TRY", decimalPrecision: 2, isActive: true, tradingEnabled: false, visibility: "PUBLIC" },
+    });
+  }
 
   // Individual BIST equities, sourced from Yahoo Finance's public chart feed
   // (see yahoo-bist-provider.ts) for prices and from the MIT-licensed
@@ -333,20 +514,52 @@ async function main() {
     });
   }
 
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? "admin@ultima.local";
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+  // TRY term deposit products. Existing rows are left untouched; only missing terms are created,
+  // so admin-edited rates survive re-running the seed. Rates for new terms are placeholders to review in /admin.
+  // Term deposit products per currency. Existing rows are left untouched; only missing
+  // (currency, term) pairs are created, so admin-edited rates survive re-running the seed.
+  // Rates for terms not set in /admin are placeholders to review.
+  const TERM_DEPOSIT_PRODUCTS: { currency: "TRY" | "USD"; termDays: number; annualRate: string; minAmount: string }[] = [
+    { currency: "TRY", termDays: 1, annualRate: "1.5000", minAmount: "10000" },
+    { currency: "TRY", termDays: 7, annualRate: "2.0000", minAmount: "10000" },
+    { currency: "TRY", termDays: 15, annualRate: "4.0000", minAmount: "25000" },
+    { currency: "TRY", termDays: 30, annualRate: "3.0000", minAmount: "10000" },
+    { currency: "TRY", termDays: 90, annualRate: "3.5000", minAmount: "10000" },
+    { currency: "TRY", termDays: 180, annualRate: "3.7500", minAmount: "10000" },
+    { currency: "USD", termDays: 1, annualRate: "0.5000", minAmount: "100" },
+    { currency: "USD", termDays: 7, annualRate: "1.0000", minAmount: "100" },
+    { currency: "USD", termDays: 15, annualRate: "1.5000", minAmount: "100" },
+    { currency: "USD", termDays: 30, annualRate: "2.0000", minAmount: "100" },
+    { currency: "USD", termDays: 90, annualRate: "2.5000", minAmount: "100" },
+    { currency: "USD", termDays: 180, annualRate: "3.0000", minAmount: "100" },
+  ];
+  for (const [position, term] of TERM_DEPOSIT_PRODUCTS.entries()) {
+    const existing = await prisma.termDepositProduct.findFirst({ where: { currency: term.currency, termDays: term.termDays } });
+    if (!existing) {
+      await prisma.termDepositProduct.create({
+        data: { currency: term.currency, termDays: term.termDays, annualRate: term.annualRate, minAmount: term.minAmount, position, isActive: true },
+      });
+    }
+  }
+
+  // Login accepts T.C. or phone only, so the admin is identified by phone (ADMIN_PHONE, 5XXXXXXXXX).
+  const adminPhoneLocal = process.env.ADMIN_PHONE;
+  const adminPassword = process.env.ADMIN_PASS;
+  if (!adminPhoneLocal || !/^5\d{9}$/.test(adminPhoneLocal) || !adminPassword) {
+    throw new Error("ADMIN_PHONE (5XXXXXXXXX) and ADMIN_PASS must be set to seed the admin account.");
+  }
+  const adminPhone = `+90${adminPhoneLocal}`;
   const adminRole = await prisma.role.findUniqueOrThrow({ where: { key: "SUPER_ADMIN" } });
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { phone: adminPhone },
     update: {},
     create: {
-      email: adminEmail,
+      phone: adminPhone,
       name: "Ultima Admin",
       passwordHash,
       status: "ACTIVE",
-      emailVerified: new Date(),
       wallet: { create: {} },
       portfolio: { create: {} },
     },
@@ -358,7 +571,10 @@ async function main() {
     create: { userId: admin.id, roleId: adminRole.id },
   });
 
-  console.log(`Seeded RBAC + BIST exchange. Dev admin: ${adminEmail} / ${adminPassword}`);
+  await seedInvestmentFunds();
+  await seedCampaigns();
+
+  console.log(`Seeded RBAC + BIST exchange. Admin phone: ${adminPhone}`);
 }
 
 main()

@@ -8,6 +8,9 @@ export interface ResolvedPrice {
   change: number | null;
   changePercent: number | null;
   volume: number | null;
+  open: number | null;
+  high: number | null;
+  low: number | null;
   bid: number | null;
   ask: number | null;
   provenance: DataProvenance;
@@ -30,6 +33,9 @@ export async function resolveAssetPrice(asset: Asset): Promise<ResolvedPrice> {
       changePercent:
         asset.manualChangePercent != null ? Number(asset.manualChangePercent) : null,
       volume: null,
+      open: null,
+      high: null,
+      low: null,
       bid: null,
       ask: null,
       provenance: "MANUAL_OVERRIDE",
@@ -48,6 +54,9 @@ export async function resolveAssetPrice(asset: Asset): Promise<ResolvedPrice> {
       change: null,
       changePercent: null,
       volume: null,
+      open: null,
+      high: null,
+      low: null,
       bid: null,
       ask: null,
       provenance: "UNAVAILABLE",
@@ -62,6 +71,9 @@ export async function resolveAssetPrice(asset: Asset): Promise<ResolvedPrice> {
     change: quote.change,
     changePercent: quote.changePercent,
     volume: quote.volume,
+    open: quote.open,
+    high: quote.high,
+    low: quote.low,
     bid: quote.bid,
     ask: quote.ask,
     provenance: quote.provenance,

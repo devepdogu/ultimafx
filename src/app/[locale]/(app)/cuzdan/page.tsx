@@ -1,108 +1,168 @@
-import { getTranslations } from "next-intl/server";
 import { requireUserForPage } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
-import { Card } from "@/components/ui/Card";
-import { DepositRequestForm } from "@/components/wallet/DepositRequestForm";
-import { WithdrawalRequestForm } from "@/components/wallet/WithdrawalRequestForm";
-import { formatDateTime, formatPrice } from "@/lib/utils/format";
+import { getPortfolioSummary } from "@/lib/portfolio/summary";
+import { WalletView, type FxDetails, type WalletViewData } from "@/components/wallet/WalletView";
+import { settleMaturedTermDeposits } from "@/lib/term-deposit/service";
+import { resolveAssetPrice } from "@/lib/market-data/resolve-price";
+
+/** Only FX conversion rows carry structured details; anything else is treated as having none. */
+function parseFxMetadata(value: unknown): FxDetails | null {
+  if (!value || typeof value !== "object") return null;
+  const m = value as Record<string, unknown>;
+  if (typeof m.tryAmount !== "number" || typeof m.usdAmount !== "number" || typeof m.rate !== "number") return null;
+  return {
+    direction: m.direction === "USD_TO_TRY" ? "USD_TO_TRY" : "TRY_TO_USD",
+    tryAmount: m.tryAmount,
+    usdAmount: m.usdAmount,
+    rate: m.rate,
+  };
+}
+
+/** Shows only the last 4 characters of an account or wallet identifier. */
+function maskTail(value: string) {
+  return `•••• ${value.slice(-4)}`;
+}
 
 export default async function WalletPage() {
-  const t = await getTranslations("wallet");
-  const tr = await getTranslations("requests");
   const user = await requireUserForPage();
+  await settleMaturedTermDeposits(user.id);
 
-  const statusLabels: Record<string, string> = {
-    PENDING: tr("pending"),
-    COMPLETED: tr("completed"),
-    REJECTED: tr("rejected"),
-    APPROVED: tr("completed"),
-    CANCELLED: tr("cancelled"),
-  };
+  const usdAsset = await prisma.asset.findUnique({ where: { symbol: "USDTRY" } });
+  const usd = usdAsset ? await resolveAssetPrice(usdAsset) : null;
 
-  const [wallet, transactions, deposits, withdrawals] = await Promise.all([
-    prisma.wallet.findUnique({ where: { userId: user.id } }),
+  const [summary, deposits, withdrawals, orders, trades, transactions] = await Promise.all([
+    getPortfolioSummary(user.id),
+    prisma.deposit.findMany({
+      where: { userId: user.id },
+      include: { bankAccount: true, cryptoAddress: true },
+      orderBy: { requestedAt: "desc" },
+      take: 20,
+    }),
+    prisma.withdrawal.findMany({ where: { userId: user.id }, orderBy: { requestedAt: "desc" }, take: 20 }),
+    prisma.order.findMany({
+      where: { userId: user.id },
+      include: { asset: true },
+      orderBy: { placedAt: "desc" },
+      take: 100,
+    }),
+    prisma.trade.findMany({
+      where: { userId: user.id },
+      include: { asset: true },
+      orderBy: { executedAt: "desc" },
+      take: 50,
+    }),
     prisma.walletTransaction.findMany({
       where: { wallet: { userId: user.id } },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 30,
     }),
-    prisma.deposit.findMany({ where: { userId: user.id }, orderBy: { requestedAt: "desc" }, take: 5 }),
-    prisma.withdrawal.findMany({ where: { userId: user.id }, orderBy: { requestedAt: "desc" }, take: 5 }),
   ]);
 
-  return (
-    <div className=" px-4 py-6">
-      <h1 className="mb-6 text-xl font-bold">{t("title")}</h1>
+  const cash = Number(summary.cash);
+  const usdBalance = Number(summary.usdCash);
+  const usdTry = usd?.price ?? null;
+  // summary.totalValue already includes the USD balance and USD holdings converted to TRY.
+  const totalValue = Number(summary.totalValue);
+  const totalPnl = Number(summary.totalPnl);
+  const invested = Number(summary.investments);
+  const totalPnlPercent = invested > 0 ? (totalPnl / (invested - totalPnl)) * 100 : null;
 
-      <Card className="mb-4">
-        <div className="text-sm text-muted">{t("cashBalance")}</div>
-        <div className="num-tabular text-2xl font-bold">
-          {formatPrice(wallet ? Number(wallet.cashBalance) : 0)}
-        </div>
-        {wallet && Number(wallet.pendingBalance) > 0 && (
-          <div className="mt-1 text-xs text-muted">
-            {t("pendingBalance")}: {formatPrice(Number(wallet.pendingBalance))}
-          </div>
-        )}
-      </Card>
+  const data: WalletViewData = {
+    usdTry,
+    cash,
+    usdBalance,
+    totalValue,
+    totalPnl,
+    totalPnlPercent,
+    assets: summary.holdings.map((h) => ({
+      id: h.id,
+      symbol: h.asset.symbol,
+      name: h.asset.name,
+      type: h.asset.type,
+      logoUrl: h.asset.logoUrl,
+      quantity: Number(h.quantity),
+      marketValue: Number(h.marketValue),
+      currency: h.asset.currency,
+      averageCost: Number(h.averageCost),
+      currentPrice: h.currentPrice != null ? Number(h.currentPrice) : null,
+      cost: Number(h.quantity) * Number(h.averageCost),
+      pnl: Number(h.pnl.absolute),
+      pnlPercent: Number(h.pnl.percent),
+    })),
+    requests: [
+      ...deposits.map((d) => ({
+        id: d.id,
+        kind: "DEPOSIT" as const,
+        method: d.method,
+        amount: Number(d.amount),
+        status: d.status,
+        reference: d.reference,
+        destination:
+          d.method === "CRYPTO"
+            ? d.cryptoAddress && `${d.cryptoAddress.network} · ${maskTail(d.cryptoAddress.address)}`
+            : d.bankAccount && `${d.bankAccount.bankName} · ${maskTail(d.bankAccount.iban)}`,
+        date: d.requestedAt.toISOString(),
+      })),
+      ...withdrawals.map((w) => ({
+        id: w.id,
+        kind: "WITHDRAWAL" as const,
+        method: w.method,
+        amount: Number(w.amount),
+        status: w.status,
+        reference: w.reference,
+        destination:
+          w.method === "CRYPTO"
+            ? w.destinationAddress && `${w.destinationNetwork ?? "Kripto"} · ${maskTail(w.destinationAddress)}`
+            : w.destinationIban && `${w.destinationBankName ?? "Banka"} · ${maskTail(w.destinationIban)}`,
+        date: w.requestedAt.toISOString(),
+      })),
+    ].sort((a, b) => b.date.localeCompare(a.date)),
+    openOrders: orders
+      .filter((o) => o.status === "PENDING" || o.status === "OPEN" || o.status === "PARTIALLY_FILLED")
+      .map((o) => ({
+        id: o.id,
+        symbol: o.asset.symbol,
+        assetType: o.asset.type,
+        logoUrl: o.asset.logoUrl,
+        side: o.side,
+        quantity: Number(o.quantity),
+        price: o.limitPrice != null ? Number(o.limitPrice) : null,
+        status: o.status,
+        date: o.placedAt.toISOString(),
+      })),
+    trades: trades.map((t) => ({
+      id: t.id,
+      symbol: t.asset.symbol,
+      assetType: t.asset.type,
+      logoUrl: t.asset.logoUrl,
+      side: t.side,
+      quantity: Number(t.quantity),
+      price: Number(t.price),
+      status: "FILLED",
+      date: t.executedAt.toISOString(),
+    })),
+    limitOrders: orders
+      .filter((o) => o.type === "LIMIT")
+      .map((o) => ({
+        id: o.id,
+        symbol: o.asset.symbol,
+        assetType: o.asset.type,
+        logoUrl: o.asset.logoUrl,
+        side: o.side,
+        quantity: Number(o.quantity),
+        price: o.limitPrice != null ? Number(o.limitPrice) : null,
+        status: o.status,
+        date: o.placedAt.toISOString(),
+      })),
+    transactions: transactions.map((t) => ({
+      id: t.id,
+      type: t.type,
+      metadata: parseFxMetadata(t.metadata),
+      description: t.description ?? t.type,
+      amount: Number(t.amount),
+      date: t.createdAt.toISOString(),
+    })),
+  };
 
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card>
-          <h2 className="mb-3 text-sm font-semibold">{t("deposit")}</h2>
-          <DepositRequestForm />
-        </Card>
-        <Card>
-          <h2 className="mb-3 text-sm font-semibold">{t("withdraw")}</h2>
-          <WithdrawalRequestForm />
-        </Card>
-      </div>
-
-      {(deposits.length > 0 || withdrawals.length > 0) && (
-        <Card className="mb-4">
-          <h2 className="mb-3 text-sm font-semibold">{t("requests")}</h2>
-          <div className="flex flex-col gap-2 text-sm">
-            {deposits.map((d) => (
-              <div key={d.id} className="flex items-center justify-between">
-                <span>
-                  {t("deposit")} · {formatPrice(Number(d.amount))}
-                </span>
-                <span className="text-xs text-muted">{statusLabels[d.status]}</span>
-              </div>
-            ))}
-            {withdrawals.map((w) => (
-              <div key={w.id} className="flex items-center justify-between">
-                <span>
-                  {t("withdraw")} · {formatPrice(Number(w.amount))}
-                </span>
-                <span className="text-xs text-muted">{statusLabels[w.status]}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <h2 className="mb-2 text-sm font-semibold text-muted">{t("transactionHistory")}</h2>
-      {transactions.length === 0 ? (
-        <Card>
-          <p className="text-sm text-muted">{t("noTransactions")}</p>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {transactions.map((tx) => (
-            <Card key={tx.id} className="flex items-center justify-between py-3">
-              <div>
-                <div className="text-sm font-medium">{tx.description ?? tx.type}</div>
-                <div className="text-xs text-muted">{formatDateTime(tx.createdAt.toISOString())}</div>
-              </div>
-              <div
-                className={`num-tabular text-sm font-semibold ${Number(tx.amount) < 0 ? "text-negative" : "text-positive"}`}
-              >
-                {formatPrice(Number(tx.amount))}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <WalletView data={data} />;
 }

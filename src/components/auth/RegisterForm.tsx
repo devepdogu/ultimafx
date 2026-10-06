@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { registerAction, type ActionResult } from "@/lib/auth/actions";
 import { CreditCard, Lock, User, Gift, ChevronLeft } from "lucide-react";
+import { LegalModal } from "@/components/auth/LegalModal";
+import type { LegalKey } from "@/lib/legal/texts";
 
 const initialState: ActionResult = {};
 
@@ -11,8 +13,12 @@ const fieldClass =
   "flex h-[52px] w-full items-center gap-3 rounded-[12px] border border-[#2A3B52] bg-[#111820] px-4 text-[14px] text-white outline-none focus-within:border-[#58ABFF]";
 const inputClass = "min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#7A8AA0]";
 
+type ConsentKey = "terms" | "kvkk";
+
 export function RegisterForm({ referralCode = "" }: { referralCode?: string }) {
   const [state, formAction, pending] = useActionState(registerAction, initialState);
+  const [accepted, setAccepted] = useState<Record<ConsentKey, boolean>>({ terms: false, kvkk: false });
+  const [modal, setModal] = useState<LegalKey | null>(null);
 
   return (
     <div>
@@ -74,14 +80,29 @@ export function RegisterForm({ referralCode = "" }: { referralCode?: string }) {
         </label>
         {state.error && <p className="text-[13px] text-[#FF6385]">{state.error}</p>}
 
+        {/* Checkboxes are controlled: clicking opens the text; only "Okudum, anladım" ticks them. */}
         <label className="mt-2 flex items-start gap-2 text-[12px] font-semibold text-[#BECBDD]">
-          <input name="terms" type="checkbox" required className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#0B69D4]" />
+          <input
+            name="terms"
+            type="checkbox"
+            required
+            checked={accepted.terms}
+            onChange={() => setModal("terms")}
+            className="mt-0.5 h-4.5 w-4.5 shrink-0 accent-[#0B69D4]"
+          />
           <span>
             <span className="underline">Kullanıcı Sözleşmesi</span>&apos;ni okudum ve kabul ediyorum.
           </span>
         </label>
         <label className="flex items-start gap-2 text-[12px] font-semibold text-[#BECBDD]">
-          <input name="kvkk" type="checkbox" required className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#0B69D4]" />
+          <input
+            name="kvkk"
+            type="checkbox"
+            required
+            checked={accepted.kvkk}
+            onChange={() => setModal("kvkk")}
+            className="mt-0.5 h-4.5 w-4.5 shrink-0 accent-[#0B69D4]"
+          />
           <span>
             <span className="underline">KVKK Aydınlatma Metni</span>&apos;ni okudum ve kabul ediyorum.
           </span>
@@ -90,18 +111,26 @@ export function RegisterForm({ referralCode = "" }: { referralCode?: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="mt-3 flex h-[48px] w-full items-center justify-center rounded-[24px] bg-[#0B69D4] text-[16px] font-bold text-white disabled:opacity-60"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-3xl bg-[#0B69D4] text-[16px] font-bold text-white disabled:opacity-60"
         >
           Müşteri Ol →
         </button>
         <Link
           href="/"
-          className="flex h-[48px] w-full items-center justify-center gap-1 rounded-[24px] border border-[#2A3B52] bg-[#111820] text-[14px] font-semibold text-white"
+          className="flex h-12 w-full items-center justify-center gap-1 rounded-3xl border border-[#2A3B52] bg-[#111820] text-[14px] font-semibold text-white"
         >
           <ChevronLeft size={16} />
           Geri Dön
         </Link>
       </form>
+
+      <LegalModal
+        open={modal === "terms" || modal === "kvkk" ? modal : null}
+        onClose={() => setModal(null)}
+        onAccept={() => {
+          if (modal === "terms" || modal === "kvkk") setAccepted((a) => ({ ...a, [modal]: true }));
+        }}
+      />
     </div>
   );
 }

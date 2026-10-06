@@ -17,7 +17,11 @@ export interface HoldingRow {
 }
 
 export interface PortfolioSummary {
+  /** TRY cash. */
   cash: Decimal;
+  /** USD cash; included in totalValue at the live USD/TRY rate. */
+  usdCash: Decimal;
+  /** Holdings valued in TRY (USD assets converted at the live rate). */
   investments: Decimal;
   totalValue: Decimal;
   totalPnl: Decimal;
@@ -41,6 +45,13 @@ export async function getPortfolioSummary(userId: string): Promise<PortfolioSumm
   ]);
 
   const cash = wallet ? new Decimal(wallet.cashBalance.toString()) : new Decimal(0);
+  const usdCash = wallet ? new Decimal(wallet.usdBalance.toString()) : new Decimal(0);
+
+  // USD holdings and USD cash are converted at the live USD/TRY rate so every total is in TRY.
+  const usdAsset = await prisma.asset.findUnique({ where: { symbol: "USDTRY" } });
+  const usdRate = usdAsset ? (await resolveAssetPrice(usdAsset)).price : null;
+  const toTry = (value: Decimal, currency: string) =>
+    currency === "USD" ? value.times(usdRate ?? 0) : value;
 
   const holdings: HoldingRow[] = await Promise.all(
     (portfolio?.holdings ?? []).map(async (holding) => {
@@ -63,15 +74,15 @@ export async function getPortfolioSummary(userId: string): Promise<PortfolioSumm
     })
   );
 
-  const investments = holdings.reduce((acc, r) => acc.plus(r.marketValue), new Decimal(0));
-  const totalValue = cash.plus(investments);
-  const totalPnl = holdings.reduce((acc, r) => acc.plus(r.pnl.absolute), new Decimal(0));
+  const investments = holdings.reduce((acc, r) => acc.plus(toTry(r.marketValue, r.asset.currency)), new Decimal(0));
+  const totalValue = cash.plus(toTry(usdCash, "USD")).plus(investments);
+  const totalPnl = holdings.reduce((acc, r) => acc.plus(toTry(r.pnl.absolute, r.asset.currency)), new Decimal(0));
 
   const allocation: Partial<Record<AssetType, Decimal>> = {};
   for (const row of holdings) {
     const key = row.asset.type;
-    allocation[key] = (allocation[key] ?? new Decimal(0)).plus(row.marketValue);
+    allocation[key] = (allocation[key] ?? new Decimal(0)).plus(toTry(row.marketValue, row.asset.currency));
   }
 
-  return { cash, investments, totalValue, totalPnl, holdings, allocation };
+  return { cash, usdCash, investments, totalValue, totalPnl, holdings, allocation };
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { useToast } from "@/components/ui/Toaster";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion, useDragControls } from "motion/react";
 import { X, ChevronLeft } from "lucide-react";
@@ -21,6 +22,7 @@ interface TradeSheetProps {
   currency: string;
   availableBalance: number;
   heldQuantity: number;
+  dock?: boolean;
 }
 
 export function TradeSheet({
@@ -33,6 +35,7 @@ export function TradeSheet({
   currency,
   availableBalance,
   heldQuantity,
+  dock = false,
 }: TradeSheetProps) {
   const t = useTranslations("trade");
   const tc = useTranslations("common");
@@ -41,6 +44,11 @@ export function TradeSheet({
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
   const [quantity, setQuantity] = useState("");
   const [state, formAction, pending] = useActionState(placeMarketOrderAction, initialState);
+  const toast = useToast();
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+    else if (state.success) toast.success(state.success);
+  }, [state, toast]);
   const dragControls = useDragControls();
 
   const estimatedTotal = useMemo(() => {
@@ -67,17 +75,17 @@ export function TradeSheet({
 
   return (
     <>
-      <div className="flex gap-3">
+      <div className={dock ? "fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-border bg-background px-3 pb-2 pt-2" : "flex gap-3"}>
         <Button
           variant="sell"
           size="lg"
-          className="h-auto flex-1 py-2.5"
+          className={dock ? "h-auto flex-1 rounded-xl py-3 !bg-[#FF4976] text-white hover:!bg-[#FF4976]" : "h-auto flex-1 py-2.5"}
           disabled={!canTrade}
           onClick={() => openSheet("SELL")}
         >
           <span className="flex flex-col items-center">
             <span>{tc("sell")}</span>
-            <span className="num-tabular text-xs font-semibold opacity-90">
+            <span className={dock ? "num-tabular text-[16px] font-extrabold" : "num-tabular text-xs font-semibold opacity-90"}>
               {formatPrice(bid ?? price, currency)}
             </span>
           </span>
@@ -85,13 +93,13 @@ export function TradeSheet({
         <Button
           variant="buy"
           size="lg"
-          className="h-auto flex-1 py-2.5"
+          className={dock ? "h-auto flex-1 rounded-xl py-3 !bg-[#00A651] text-white hover:!bg-[#00A651]" : "h-auto flex-1 py-2.5"}
           disabled={!canTrade}
           onClick={() => openSheet("BUY")}
         >
           <span className="flex flex-col items-center">
             <span>{tc("buy")}</span>
-            <span className="num-tabular text-xs font-semibold opacity-90">
+            <span className={dock ? "num-tabular text-[16px] font-extrabold" : "num-tabular text-xs font-semibold opacity-90"}>
               {formatPrice(ask ?? price, currency)}
             </span>
           </span>
@@ -243,8 +251,6 @@ export function TradeSheet({
                       </div>
                     </div>
 
-                    {state.error && <p className="text-sm text-negative">{state.error}</p>}
-                    {state.success && <p className="text-sm text-positive">{state.success}</p>}
 
                     <Button
                       type="submit"

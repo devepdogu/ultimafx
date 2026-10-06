@@ -13,7 +13,6 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import { LineChart as LineChartIcon, AlertTriangle, BarChart3, TrendingUp } from "lucide-react";
-import { Tabs } from "@/components/ui/Tabs";
 import { IconButton } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -144,19 +143,19 @@ export function PriceChart({ symbol, volume }: PriceChartProps) {
       seriesRef.current =
         kind === "candlestick"
           ? chart.addSeries(CandlestickSeries, {
-              upColor: colors.positive,
-              downColor: colors.negative,
-              wickUpColor: colors.positive,
-              wickDownColor: colors.negative,
-              borderVisible: false,
-            })
+            upColor: colors.positive,
+            downColor: colors.negative,
+            wickUpColor: colors.positive,
+            wickDownColor: colors.negative,
+            borderVisible: false,
+          })
           : kind === "line"
             ? chart.addSeries(LineSeries, { lineWidth: 2, priceLineVisible: false, lastValueVisible: true })
             : chart.addSeries(AreaSeries, {
-                lineWidth: 2,
-                priceLineVisible: false,
-                lastValueVisible: true,
-              });
+              lineWidth: 2,
+              priceLineVisible: false,
+              lastValueVisible: true,
+            });
       seriesKindRef.current = kind;
     }
 
@@ -195,13 +194,22 @@ export function PriceChart({ symbol, volume }: PriceChartProps) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <Tabs
-          size="sm"
-          value={period}
-          onChange={setPeriod}
-          options={PERIODS.map((p) => ({ value: p, label: t(p) }))}
-        />
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1 p-1 bg-surface  border-b border-border w-full">
+          {PERIODS.map((pr) => (
+            <button
+              key={pr}
+              type="button"
+              onClick={() => setPeriod(pr)}
+              className={cn(
+                "rounded-sm  text-[12px] w-[30px] h-[30px] transition-colors",
+                period === pr ? "bg-surface-2 font-bold text-foreground" : "font-medium text-muted"
+              )}
+            >
+              {t(pr)}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-0.5 border-b border-border w-full p-1 pb-2">
           <IconButton
             label="Mum grafik"
             className={cn(effectiveType === "candlestick" && "bg-surface-2 text-foreground")}
@@ -228,26 +236,29 @@ export function PriceChart({ symbol, volume }: PriceChartProps) {
       </div>
 
       {displayBar && (
-        <div className="num-tabular mb-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">
+        <div className="num-tabular mb-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 border-b px-2 border-foreground/80 pb-1.5 text-[11px] text-muted">
           <span>
-            O <span className="text-foreground">{displayBar.open.toFixed(2)}</span>
+            O <span className="text-foreground font-black">{displayBar.open.toFixed(2)}</span>
           </span>
           <span>
-            H <span className="text-foreground">{displayBar.high.toFixed(2)}</span>
+            H <span className="text-foreground font-black">{displayBar.high.toFixed(2)}</span>
           </span>
           <span>
-            L <span className="text-foreground">{displayBar.low.toFixed(2)}</span>
+            L <span className="text-foreground font-black">{displayBar.low.toFixed(2)}</span>
           </span>
           <span>
-            C <span className="text-foreground">{displayBar.close.toFixed(2)}</span>
+            C <span className="text-foreground font-black">{displayBar.close.toFixed(2)}</span>
           </span>
           <span>
             Hac{" "}
-            <span className="text-foreground">
+            <span className="text-foreground font-black">
               {(displayBar.volume ?? volume) != null
                 ? new Intl.NumberFormat("tr-TR").format(displayBar.volume ?? volume ?? 0)
                 : "—"}
             </span>
+          </span>
+          <span className={cn("mr-auto font-semibold", displayBar.close < displayBar.open ? "text-[#FF4976]" : "text-[#00A651]")}>
+            {displayBar.open ? `${(((displayBar.close - displayBar.open) / displayBar.open) * 100).toFixed(2)}%` : "—"}
           </span>
         </div>
       )}

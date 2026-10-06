@@ -5,6 +5,8 @@ import { Link } from "@/i18n/navigation";
 import { loginAction, type ActionResult } from "@/lib/auth/actions";
 import { CreditCard, Phone, Lock, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { LegalModal } from "@/components/auth/LegalModal";
+import type { LegalKey } from "@/lib/legal/texts";
 
 const initialState: ActionResult = {};
 
@@ -17,6 +19,7 @@ type Mode = "tc" | "phone";
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
   const [mode, setMode] = useState<Mode>("tc");
+  const [modal, setModal] = useState<LegalKey | null>(null);
 
   return (
     <div>
@@ -33,7 +36,7 @@ export function LoginForm() {
           type="button"
           onClick={() => setMode("tc")}
           className={cn(
-            "flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[12px] border text-[13px] font-bold",
+            "flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[12px] border text-[13px] font-bold",
             mode === "tc" ? "border-[#0B69D4] bg-[#0B69D4] text-white" : "border-[#2A3B52] bg-[#111820] text-[#BECBDD]"
           )}
         >
@@ -44,7 +47,7 @@ export function LoginForm() {
           type="button"
           onClick={() => setMode("phone")}
           className={cn(
-            "flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[12px] border text-[13px] font-bold",
+            "flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[12px] border text-[13px] font-bold",
             mode === "phone" ? "border-[#0B69D4] bg-[#0B69D4] text-white" : "border-[#2A3B52] bg-[#111820] text-[#BECBDD]"
           )}
         >
@@ -92,23 +95,32 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="mt-4 flex h-[48px] w-full items-center justify-center rounded-[24px] bg-[#0B69D4] text-[16px] font-bold text-white disabled:opacity-60"
+          className="mt-4 flex h-12 w-full items-center justify-center rounded-3xl bg-[#0B69D4] text-[16px] font-bold text-white disabled:opacity-60"
         >
           Giriş Yap →
         </button>
         <Link
           href="/"
-          className="flex h-[48px] w-full items-center justify-center gap-1 rounded-[24px] border border-[#2A3B52] bg-[#111820] text-[14px] font-semibold text-white"
+          className="flex h-12 w-full items-center justify-center gap-1 rounded-3xl border border-[#2A3B52] bg-[#111820] text-[14px] font-semibold text-white"
         >
           <ChevronLeft size={16} />
           Geri Dön
         </Link>
       </form>
 
-      <p className="mt-4 text-center text-[11px] leading-[14px] text-[#BECBDD]">
-        Devam ederek <span className="underline">Kullanım Şartları</span> ve <span className="underline">Gizlilik Politikası</span>
+      <p className="mt-4 text-center text-[11px] leading-3.5 text-[#BECBDD]">
+        Devam ederek{" "}
+        <button type="button" onClick={() => setModal("terms")} className="underline">
+          Kullanım Şartları
+        </button>{" "}
+        ve{" "}
+        <button type="button" onClick={() => setModal("privacy")} className="underline">
+          Gizlilik Politikası
+        </button>
         &apos;nı kabul etmiş olursunuz.
       </p>
+
+      <LegalModal open={modal} onClose={() => setModal(null)} />
     </div>
   );
 }

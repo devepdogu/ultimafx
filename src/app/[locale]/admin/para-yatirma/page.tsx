@@ -1,55 +1,83 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { redirect } from "@/i18n/navigation";
-import { getCurrentUser, ADMIN_ROLES } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
-import { Card } from "@/components/ui/Card";
-import { ReviewRequestForm } from "@/components/admin/ReviewRequestForm";
+import { AdminEmpty, AdminPageHeader, AdminPanel, AdminStatCard, relativeTime } from "@/components/admin/AdminUi";
+import { CalendarDays, Clock, Hourglass, Wallet } from "lucide-react";
+import { AdminFilters } from "@/components/admin/AdminFilters";
+import { RequestCard } from "@/components/admin/RequestCard";
 import { approveDepositAction, rejectDepositAction } from "@/lib/wallet/admin-actions";
 import { formatDateTime, formatPrice } from "@/lib/utils/format";
+import { BANK_PRESETS, CRYPTO_NETWORK_PRESETS, presetFor } from "@/lib/admin/presets";
 
-export default async function AdminDepositsPage() {
-  const user = await getCurrentUser();
-  const locale = await getLocale();
-  if (!user) return redirect({ href: "/giris", locale });
-  const isAdmin = user.roles?.some((r) => ADMIN_ROLES.includes(r as (typeof ADMIN_ROLES)[number]));
-  if (!isAdmin) return redirect({ href: "/", locale });
-
-  const t = await getTranslations("requests");
-  const deposits = await prisma.deposit.findMany({
-    include: { user: true },
-    orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
-    take: 50,
-  });
+export default async function AdminDepositsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status = "" } = await searchParams;
+  const [deposits, pendingAgg] = await Promise.all([
+    prisma.deposit.findMany({
+      where: status ? { status: status as "PENDING" } : {},
+      include: { user: true, bankAccount: true, cryptoAddress: true },
+      orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
+      take: 100,
+    }),
+    prisma.deposit.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
+  ]);
+  const pendingTotal = Number(pendingAgg._sum.amount ?? 0);
+  const [oldest, todayCount] = await Promise.all([
+    prisma.deposit.findFirst({ where: { status: "PENDING" }, orderBy: { requestedAt: "asc" }, select: { requestedAt: true } }),
+    prisma.deposit.count({ where: { requestedAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
+  ]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
-      <h1 className="mb-6 text-xl font-bold">{t("depositsTitle")}</h1>
-      <div className="flex flex-col gap-2">
-        {deposits.map((d) => (
-          <Card key={d.id} className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium">{d.user.email}</div>
-              <div className="num-tabular text-sm">{formatPrice(Number(d.amount))}</div>
-              <div className="text-xs text-muted">
-                {formatDateTime(d.requestedAt.toISOString())} · {d.status}
-              </div>
-            </div>
-            {d.status === "PENDING" ? (
-              <div className="flex gap-2">
-                <ReviewRequestForm id={d.id} action={approveDepositAction} variant="approve" />
-                <ReviewRequestForm id={d.id} action={rejectDepositAction} variant="reject" />
-              </div>
-            ) : (
-              <span className="text-xs text-muted">{t("processed")}</span>
-            )}
-          </Card>
-        ))}
-        {deposits.length === 0 && (
-          <Card>
-            <p className="text-sm text-muted">{t("noDeposits")}</p>
-          </Card>
-        )}
+    <div className="flex max-w-5xl flex-col gap-6">
+      <AdminPageHeader title="Para Yatırma" description="Gelen yatırma talepleri. Dekontu ve referans kodunu hesapla karşılaştırıp onaylayın." />
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <AdminStatCard icon={Clock} label="Onay bekleyen" value={String(pendingAgg._count)} hint={pendingAgg._count > 0 ? "Onayınızı bekliyor" : "Bekleyen talep yok"} tone={pendingAgg._count > 0 ? "warning" : "neutral"} />
+        <AdminStatCard icon={Wallet} label="Bekleyen toplam" value={formatPrice(pendingTotal)} hint="Tüm bekleyen talepler" />
+        <AdminStatCard icon={Hourglass} label="En eski bekleyen" value={oldest ? relativeTime(oldest.requestedAt) : "—"} hint={oldest ? formatDateTime(oldest.requestedAt.toISOString()) : "Kuyruk boş"} />
+        <AdminStatCard icon={CalendarDays} label="Bugün gelen" value={String(todayCount)} hint="Bugün açılan talep" />
       </div>
+
+      <AdminPanel title={`Talepler (${deposits.length})`}>
+        <AdminFilters
+          q=""
+          status={status}
+          basePath="/admin/para-yatirma"
+          statuses={[
+            { value: "PENDING", label: "Bekleyen" },
+            { value: "COMPLETED", label: "Tamamlanan" },
+            { value: "REJECTED", label: "Reddedilen" },
+          ]}
+        />
+        {deposits.length === 0 ? (
+          <AdminEmpty>Bu filtrede talep yok.</AdminEmpty>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {deposits.map((d) => {
+              const isCrypto = d.method === "CRYPTO";
+              const bank = presetFor(BANK_PRESETS, d.bankAccount?.bankName);
+              const net = presetFor(CRYPTO_NETWORK_PRESETS, d.cryptoAddress?.network);
+              return (
+                <RequestCard
+                  key={d.id}
+                  id={d.id}
+                  email={d.user.email ?? d.user.phone ?? "-"}
+                  amount={formatPrice(Number(d.amount))}
+                  reference={d.reference}
+                  provider={
+                    isCrypto
+                      ? { label: `USDT · ${net.value}`, color: net.color, logoUrl: d.cryptoAddress?.logoUrl ?? net.logoUrl }
+                      : { label: bank.label, color: bank.color, logoUrl: d.bankAccount?.logoUrl ?? bank.logoUrl }
+                  }
+                  detail={isCrypto ? (d.cryptoAddress?.address ?? "-") : (d.bankAccount?.iban ?? "-")}
+                  requestedAt={formatDateTime(d.requestedAt.toISOString())}
+                  status={d.status}
+                  approve={approveDepositAction}
+                  reject={rejectDepositAction}
+                />
+              );
+            })}
+          </div>
+        )}
+      </AdminPanel>
     </div>
   );
 }
+

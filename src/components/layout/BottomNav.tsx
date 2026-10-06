@@ -16,6 +16,8 @@ export function BottomNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
 
+  if (/^\/piyasalar\/[^/]+\/[^/]+$/.test(pathname)) return null;
+
   return (
     <nav
       className="fixed inset-x-4 bottom-3 z-40 mx-auto flex h-16 max-w-[660px] items-center justify-between rounded-[32px] border border-border bg-surface/[0.88] pl-[5px] pr-[5px] backdrop-blur md:hidden"

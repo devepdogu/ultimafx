@@ -291,6 +291,8 @@
     "auditLog": "Denetim Günlüğü",
     "systemSettings": "Sistem Ayarları",
     "manualOverrideActive": "MANUEL VERİ OVERRIDE AKTİF",
-    "siteSettings": "Site Ayarları"
+    "siteSettings": "Site Ayarları",
+    "termDeposits": "Vadeli Mevduat",
+    "cryptoAddresses": "Kripto Adresleri"
   }
 }

@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { ToastProvider } from "@/components/ui/Toaster";
 import "../globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -54,7 +55,7 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider><ToastProvider>{children}</ToastProvider></NextIntlClientProvider>
       </body>
     </html>
   );

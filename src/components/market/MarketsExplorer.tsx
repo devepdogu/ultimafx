@@ -1,13 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, ChevronDown, ChevronUp, Rocket } from "lucide-react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { AssetType } from "@prisma/client";
+import { Search, Rocket, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AssetRow, type AssetRowData } from "@/components/market/AssetRow";
-import { MarketStatusStrip, useMarketOpen } from "@/components/market/MarketStatusStrip";
+import { hasSession, isAssetSessionOpen, sessionHoursLabel } from "@/lib/trading/session";
 import { getAssetBasePath } from "@/lib/market-data/asset-routes";
 import { cn } from "@/lib/utils/cn";
+
+const VISIBLE_COUNT = 8;
+
+function subscribeMinute(onChange: () => void) {
+  const id = setInterval(onChange, 60_000);
+  return () => clearInterval(id);
+}
+
+/** Minutes since epoch: a stable snapshot that only changes once a minute. */
+function currentMinute() {
+  return Math.floor(Date.now() / 60_000);
+}
+const SEARCH_DEBOUNCE_MS = 300;
 
 export interface StockRowData extends AssetRowData {
   volume: number | null;
@@ -15,8 +29,6 @@ export interface StockRowData extends AssetRowData {
 
 type AssetClass = "bist" | "nasdaq" | "emtia" | "endeks" | "parite";
 type SortKey = "all" | "gainers" | "losers" | "favorites";
-
-const VISIBLE_COUNT = 8;
 
 function turkishIncludes(haystack: string, needle: string): boolean {
   const norm = (s: string) => s.toLocaleLowerCase("tr-TR");
@@ -37,8 +49,27 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
   const [assetClass, setAssetClass] = useState<AssetClass>("bist");
   const [sort, setSort] = useState<SortKey>("all");
   const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const isOpen = useMarketOpen();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // One clock for the whole list, ticking once a minute. Null on the server so badges never disagree with the first client render.
+  const minute = useSyncExternalStore(subscribeMinute, currentMinute, () => null);
+  const now = minute == null ? null : new Date(minute * 60_000);
+
+  // Each tab reports its own exchange session; FX, gold and funds have none to report.
+  const stripType: AssetType | null =
+    assetClass === "bist" ? "STOCK" : assetClass === "endeks" ? "INDEX" : assetClass === "nasdaq" ? "US_STOCK" : null;
+  const stripOpen = stripType && now ? isAssetSessionOpen(stripType, now) : null;
+
+  function sessionBadge(type: AssetType) {
+    if (!now || !hasSession(type)) return undefined;
+    const open = isAssetSessionOpen(type, now);
+    return (
+      <span className="ml-2 whitespace-nowrap rounded-[6px] border border-border bg-surface-3 px-2 py-1 text-[12px] font-semibold leading-none text-muted">
+        {open ? "Açık" : "Kapalı"}
+      </span>
+    );
+  }
 
   const rows: AssetRowData[] = useMemo(
     () =>
@@ -83,8 +114,13 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
             <div className="flex items-center gap-2 rounded-sm border border-border bg-surface px-3 py-2.5">
               <Search size={18} className="shrink-0 text-muted" />
               <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={draft}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setDraft(next);
+                  if (debounceRef.current) clearTimeout(debounceRef.current);
+                  debounceRef.current = setTimeout(() => setQuery(next), SEARCH_DEBOUNCE_MS);
+                }}
                 placeholder="Sembol veya isim ara..."
                 className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted"
               />
@@ -95,7 +131,6 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
             className="px-3"
             onChange={(v) => {
               setAssetClass(v);
-              setExpanded(false);
             }}
             options={[
               { value: "bist", label: "BIST" },
@@ -131,8 +166,14 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
           </Card>
         ) : (
           <>
-            {assetClass !== "nasdaq" && (
-              <MarketStatusStrip />
+            {stripType && stripOpen !== null && (
+              <div className={cn("flex items-center gap-2 rounded-xl px-3 py-2 text-[12px]", stripOpen ? "bg-positive-bg" : "bg-negative-bg")}>
+                <span className={cn("whitespace-nowrap font-semibold", stripOpen ? "text-positive" : "text-negative")}>
+                  {stripOpen ? "Piyasa açık" : "Piyasa kapalı"}
+                </span>
+                <span className="text-muted">|</span>
+                <span className="min-w-0 truncate text-muted">{sessionHoursLabel(stripType)}</span>
+              </div>
             )}
 
             <div className="flex flex-col">
@@ -140,13 +181,10 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
                 <AssetRow
                   key={asset.id}
                   asset={asset}
+                  className="px-4"
                   href={`${getAssetBasePath(asset.type)}/${asset.symbol}`}
                   showChangeAmount={false}
-                  trailing={
-                    <span className="ml-2 whitespace-nowrap rounded-[6px] border border-border bg-surface-3 px-2 py-1 text-[12px] font-semibold leading-none text-muted">
-                      {isOpen ? "Açık" : "Kapalı"}
-                    </span>
-                  }
+                  trailing={sessionBadge(asset.type)}
                 />
               ))}
               {filtered.length === 0 && (
@@ -160,12 +198,13 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="mx-4 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-brand hover:bg-surface-2"
+                className="flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-brand hover:bg-surface-2"
               >
                 {expanded ? "Daha Az Göster" : "Devamını Gör"}
                 {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             )}
+
           </>
         )}
       </div>
@@ -186,7 +225,7 @@ function UnderlineTabs<T extends string>({
 }) {
   return (
     <div className="border-b border-border">
-      <div className="flex gap-4 px-4">
+      <div className="flex gap-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {options.map((o) => {
           const buttonClassName = value === o.value
             ? "-mb-px border-b-2 border-foreground pb-2.5 pt-2 text-[14px] font-semibold text-foreground"

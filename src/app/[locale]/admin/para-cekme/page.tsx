@@ -1,58 +1,83 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { redirect } from "@/i18n/navigation";
-import { getCurrentUser, ADMIN_ROLES } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
-import { Card } from "@/components/ui/Card";
-import { ReviewRequestForm } from "@/components/admin/ReviewRequestForm";
+import { AdminEmpty, AdminPageHeader, AdminPanel, AdminStatCard, relativeTime } from "@/components/admin/AdminUi";
+import { CalendarDays, Clock, Hourglass, Wallet } from "lucide-react";
+import { AdminFilters } from "@/components/admin/AdminFilters";
+import { RequestCard } from "@/components/admin/RequestCard";
 import { approveWithdrawalAction, rejectWithdrawalAction } from "@/lib/wallet/admin-actions";
 import { formatDateTime, formatPrice } from "@/lib/utils/format";
+import { BANK_PRESETS, CRYPTO_NETWORK_PRESETS, presetFor } from "@/lib/admin/presets";
 
-export default async function AdminWithdrawalsPage() {
-  const user = await getCurrentUser();
-  const locale = await getLocale();
-  if (!user) return redirect({ href: "/giris", locale });
-  const isAdmin = user.roles?.some((r) => ADMIN_ROLES.includes(r as (typeof ADMIN_ROLES)[number]));
-  if (!isAdmin) return redirect({ href: "/", locale });
-
-  const t = await getTranslations("requests");
-  const withdrawals = await prisma.withdrawal.findMany({
-    include: { user: true },
-    orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
-    take: 50,
-  });
+export default async function AdminWithdrawalsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status = "" } = await searchParams;
+  const [withdrawals, pendingAgg] = await Promise.all([
+    prisma.withdrawal.findMany({
+      where: status ? { status: status as "PENDING" } : {},
+      include: { user: true },
+      orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
+      take: 100,
+    }),
+    prisma.withdrawal.aggregate({ where: { status: "PENDING" }, _sum: { amount: true }, _count: true }),
+  ]);
+  const pendingTotal = Number(pendingAgg._sum.amount ?? 0);
+  const [oldest, todayCount] = await Promise.all([
+    prisma.withdrawal.findFirst({ where: { status: "PENDING" }, orderBy: { requestedAt: "asc" }, select: { requestedAt: true } }),
+    prisma.withdrawal.count({ where: { requestedAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
+  ]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
-      <h1 className="mb-6 text-xl font-bold">{t("withdrawalsTitle")}</h1>
-      <div className="flex flex-col gap-2">
-        {withdrawals.map((w) => (
-          <Card key={w.id} className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium">{w.user.email}</div>
-              <div className="num-tabular text-sm">{formatPrice(Number(w.amount))}</div>
-              <div className="text-xs text-muted">
-                {w.destinationBankName} · {w.destinationIban} · {w.destinationAccountHolder}
-              </div>
-              <div className="text-xs text-muted">
-                {formatDateTime(w.requestedAt.toISOString())} · {w.status}
-              </div>
-            </div>
-            {w.status === "PENDING" ? (
-              <div className="flex gap-2">
-                <ReviewRequestForm id={w.id} action={approveWithdrawalAction} variant="approve" />
-                <ReviewRequestForm id={w.id} action={rejectWithdrawalAction} variant="reject" />
-              </div>
-            ) : (
-              <span className="text-xs text-muted">{t("processed")}</span>
-            )}
-          </Card>
-        ))}
-        {withdrawals.length === 0 && (
-          <Card>
-            <p className="text-sm text-muted">{t("noWithdrawals")}</p>
-          </Card>
-        )}
+    <div className="flex max-w-5xl flex-col gap-6">
+      <AdminPageHeader title="Para Çekme" description="Çekme talepleri. Onaylamadan önce hedef hesabı ve tutarı kontrol edin." />
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <AdminStatCard icon={Clock} label="Onay bekleyen" value={String(pendingAgg._count)} hint={pendingAgg._count > 0 ? "Onayınızı bekliyor" : "Bekleyen talep yok"} tone={pendingAgg._count > 0 ? "warning" : "neutral"} />
+        <AdminStatCard icon={Wallet} label="Ödenecek toplam" value={formatPrice(pendingTotal)} hint="Tüm bekleyen talepler" />
+        <AdminStatCard icon={Hourglass} label="En eski bekleyen" value={oldest ? relativeTime(oldest.requestedAt) : "—"} hint={oldest ? formatDateTime(oldest.requestedAt.toISOString()) : "Kuyruk boş"} />
+        <AdminStatCard icon={CalendarDays} label="Bugün gelen" value={String(todayCount)} hint="Bugün açılan talep" />
       </div>
+
+      <AdminPanel title={`Talepler (${withdrawals.length})`}>
+        <AdminFilters
+          q=""
+          status={status}
+          basePath="/admin/para-cekme"
+          statuses={[
+            { value: "PENDING", label: "Bekleyen" },
+            { value: "COMPLETED", label: "Tamamlanan" },
+            { value: "REJECTED", label: "Reddedilen" },
+          ]}
+        />
+        {withdrawals.length === 0 ? (
+          <AdminEmpty>Bu filtrede talep yok.</AdminEmpty>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {withdrawals.map((w) => {
+              const isCrypto = w.method === "CRYPTO";
+              const bank = presetFor(BANK_PRESETS, w.destinationBankName);
+              const net = presetFor(CRYPTO_NETWORK_PRESETS, w.destinationNetwork);
+              return (
+                <RequestCard
+                  key={w.id}
+                  id={w.id}
+                  email={w.user.email ?? w.user.phone ?? "-"}
+                  amount={formatPrice(Number(w.amount))}
+                  reference={w.reference}
+                  provider={isCrypto ? { label: `USDT · ${net.value}`, color: net.color, logoUrl: net.logoUrl } : { label: bank.label, color: bank.color, logoUrl: bank.logoUrl }}
+                  detail={
+                    isCrypto
+                      ? (w.destinationAddress ?? "-")
+                      : [w.destinationIban, w.destinationAccountHolder].filter(Boolean).join(" · ") || "-"
+                  }
+                  requestedAt={formatDateTime(w.requestedAt.toISOString())}
+                  status={w.status}
+                  approve={approveWithdrawalAction}
+                  reject={rejectWithdrawalAction}
+                />
+              );
+            })}
+          </div>
+        )}
+      </AdminPanel>
     </div>
   );
 }
+

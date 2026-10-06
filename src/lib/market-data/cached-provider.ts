@@ -13,6 +13,28 @@ import type {
 } from "./types";
 import { cacheAside, readCache, writeCacheForever } from "@/lib/cache/cache-aside";
 
+/**
+ * Caps how many provider requests run at once across all symbols. With quotes
+ * refreshing every 15s, hundreds of stale symbols would otherwise hit the
+ * provider in one burst and risk rate limits.
+ */
+const MAX_CONCURRENT_PROVIDER_CALLS = 8;
+let activeProviderCalls = 0;
+const providerQueue: (() => void)[] = [];
+
+async function withProviderSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (activeProviderCalls >= MAX_CONCURRENT_PROVIDER_CALLS) {
+    await new Promise<void>((resolve) => providerQueue.push(resolve));
+  }
+  activeProviderCalls++;
+  try {
+    return await fn();
+  } finally {
+    activeProviderCalls--;
+    providerQueue.shift()?.();
+  }
+}
+
 export interface CacheOptions {
   /** TTL for a "fresh" quote before the next call re-fetches from the provider. */
   quoteTtlSeconds?: number;
@@ -47,16 +69,16 @@ export function withCache(
   const freshKey = (symbol: string) => `md:${provider.id}:quote:fresh:${symbol}`;
   const lastGoodKey = (symbol: string) => `md:${provider.id}:quote:last-good:${symbol}`;
 
-  async function getQuote(symbol: string): Promise<Quote | null> {
-    const cached = await readCache<Quote>(freshKey(symbol));
-    if (cached) return cached;
-
+  /** Fetches from the provider and refreshes both the fresh and last-good caches. Concurrent calls share one request. */
+  function refreshQuote(symbol: string, background: boolean): Promise<Quote | null> {
     const existing = inFlightQuotes.get(symbol);
     if (existing) return existing;
 
     const promise = (async (): Promise<Quote | null> => {
       try {
-        const quote = await provider.getQuote(symbol);
+        // Background refreshes share the concurrency cap; a page waiting on a cold symbol never queues behind them.
+        const fetchQuote = () => provider.getQuote(symbol);
+        const quote = background ? await withProviderSlot(fetchQuote) : await fetchQuote();
         if (quote && quote.provenance !== "UNAVAILABLE") {
           await cacheAside(freshKey(symbol), quoteTtl, async () => quote);
           await writeCacheForever(lastGoodKey(symbol), quote);
@@ -77,6 +99,24 @@ export function withCache(
 
     inFlightQuotes.set(symbol, promise);
     return promise;
+  }
+
+  /**
+   * Stale-while-revalidate: a page load never waits on the provider when a
+   * last-good quote exists. The stale value is returned as CACHED and a refresh
+   * starts in the background, so the next load (or the next client refresh)
+   * shows the new price. Only a cold symbol waits for the provider.
+   */
+  async function getQuote(symbol: string): Promise<Quote | null> {
+    const cached = await readCache<Quote>(freshKey(symbol));
+    if (cached) return cached;
+
+    const lastGood = await readCache<Quote>(lastGoodKey(symbol));
+    if (lastGood) {
+      void refreshQuote(symbol, true);
+      return { ...lastGood, provenance: "CACHED" as const };
+    }
+    return refreshQuote(symbol, false);
   }
 
   return {

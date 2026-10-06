@@ -290,6 +290,8 @@
     "auditLog": "Audit Log",
     "systemSettings": "System Settings",
     "manualOverrideActive": "MANUAL DATA OVERRIDE ACTIVE",
-    "siteSettings": "Site Settings"
+    "siteSettings": "Site Settings",
+    "termDeposits": "Term Deposits",
+    "cryptoAddresses": "Crypto Addresses"
   }
 }

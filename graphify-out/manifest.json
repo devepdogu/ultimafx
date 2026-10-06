@@ -60,33 +60,33 @@
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
-    "mtime": 1791213606.8384254,
-    "seen": 1791213671.9523425,
-    "ast_hash": "958ef3285655a5d7327c122ced6a121a",
+    "mtime": 1791317995.079151,
+    "seen": 1791318041.1798427,
+    "ast_hash": "6a63e9300f430b37649f03de41288865",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/cuzdan/page.tsx": {
-    "mtime": 1791218868.7961547,
-    "seen": 1791219417.8706396,
-    "ast_hash": "3001eabfc40800bf405e39c05750f8f7",
+    "mtime": 1791306178.3720007,
+    "seen": 1791306416.5257647,
+    "ast_hash": "deef15f5e6bf6e6dc27651868eb26bb4",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/emirler/page.tsx": {
-    "mtime": 1791218868.7961547,
-    "seen": 1791219417.8706431,
-    "ast_hash": "45591370582ca7bad71b56ca50b57eb5",
+    "mtime": 1791305976.593709,
+    "seen": 1791306102.206531,
+    "ast_hash": "fef7533480b54fedd72ca21ead2ec0de",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/haberler/page.tsx": {
-    "mtime": 1791218868.7971544,
-    "seen": 1791219417.8706477,
-    "ast_hash": "bcb615bcc1ef8a56a6cfdf765c261679",
+    "mtime": 1791293629.3135097,
+    "seen": 1791293658.0809958,
+    "ast_hash": "d04c831cdcd0162aa0b30a6387cad761",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/layout.tsx": {
-    "mtime": 1791237506.0624666,
-    "seen": 1791237600.194116,
-    "ast_hash": "c5fd98e7db0b74fcc5551da8fc4e22b6",
+    "mtime": 1791307235.6770208,
+    "seen": 1791307419.8419425,
+    "ast_hash": "9378873805019418bb5cd63e26f47e57",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/page.tsx": {
@@ -144,9 +144,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/profil/page.tsx": {
-    "mtime": 1791218868.8006577,
-    "seen": 1791219417.8722658,
-    "ast_hash": "3c88e9ab587287923bb1d24db74399dc",
+    "mtime": 1791317835.1439533,
+    "seen": 1791317850.2425869,
+    "ast_hash": "5de16332570141acce5249bc11899cd9",
     "semantic_hash": ""
   },
   "src/app/[locale]/(auth)/giris/page.tsx": {
@@ -168,27 +168,27 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/page.tsx": {
-    "mtime": 1791221366.6952603,
-    "seen": 1791221492.1199505,
-    "ast_hash": "2a3a3eba84934766f87729de98378712",
+    "mtime": 1791318737.6693463,
+    "seen": 1791319398.7748723,
+    "ast_hash": "b24b80d6be6d63bbb2270677513b26d9",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/para-cekme/page.tsx": {
-    "mtime": 1790954909.9615536,
-    "seen": 1791148474.3543706,
-    "ast_hash": "652412771c8d326ba92c55af51b3e4b0",
-    "semantic_hash": "652412771c8d326ba92c55af51b3e4b0"
+    "mtime": 1791321120.4485986,
+    "seen": 1791321202.5844774,
+    "ast_hash": "73b67d1c1d09f5743b27b2c61d4c2828",
+    "semantic_hash": ""
   },
   "src/app/[locale]/admin/para-yatirma/page.tsx": {
-    "mtime": 1790954895.7083368,
-    "seen": 1791148474.354371,
-    "ast_hash": "b33c8c3b9e70fb694287dd70a28697e0",
-    "semantic_hash": "b33c8c3b9e70fb694287dd70a28697e0"
+    "mtime": 1791321120.4485986,
+    "seen": 1791321202.58448,
+    "ast_hash": "ecac3f850e54b454fa523127f3505266",
+    "semantic_hash": ""
   },
   "src/app/[locale]/layout.tsx": {
-    "mtime": 1791213987.8339813,
-    "seen": 1791214004.8830204,
-    "ast_hash": "a0651a3591b0ca6e3969d3224179df2a",
+    "mtime": 1791298821.9938612,
+    "seen": 1791298881.6415675,
+    "ast_hash": "5ee6443a7bb61294051857f96fe90bfa",
     "semantic_hash": ""
   },
   "src/app/api/auth/[...nextauth]/route.ts": {
@@ -210,28 +210,28 @@
     "semantic_hash": "10b39375deb70c5ee8df57fb8e75ff21"
   },
   "src/components/auth/LoginForm.tsx": {
-    "mtime": 1791221220.488013,
-    "seen": 1791221275.0779395,
-    "ast_hash": "3777570a653828823cc784f5372843e6",
+    "mtime": 1791294909.7307096,
+    "seen": 1791294950.3487704,
+    "ast_hash": "db46263a9527a03231509456fd748619",
     "semantic_hash": ""
   },
   "src/components/auth/RegisterForm.tsx": {
-    "mtime": 1791221221.5708663,
-    "seen": 1791221275.0779414,
-    "ast_hash": "8be11af1757e46548c453e0765c62885",
+    "mtime": 1791294908.6450498,
+    "seen": 1791294950.3487716,
+    "ast_hash": "41c497abf952523034c3e2a01d974700",
     "semantic_hash": ""
   },
   "src/components/dashboard/PortfolioHero.tsx": {
-    "mtime": 1790967380.1507394,
-    "seen": 1791148474.3543758,
-    "ast_hash": "1e43b5cb49c501f5e52a5e9d97dda3f8",
-    "semantic_hash": "1e43b5cb49c501f5e52a5e9d97dda3f8"
+    "mtime": 1791308440.9560342,
+    "seen": 1791308455.1179528,
+    "ast_hash": "8210676159a4e2f823cea91f379bc8c2",
+    "semantic_hash": ""
   },
   "src/components/dashboard/RecentActivity.tsx": {
-    "mtime": 1790967360.980029,
-    "seen": 1791148474.3543766,
-    "ast_hash": "1264947e552d6536ec987e5f094a226a",
-    "semantic_hash": "1264947e552d6536ec987e5f094a226a"
+    "mtime": 1791318139.5601668,
+    "seen": 1791318267.0569441,
+    "ast_hash": "b91450018cbcd8a76127adb76024187a",
+    "semantic_hash": ""
   },
   "src/components/dashboard/WatchlistSection.tsx": {
     "mtime": 1790968908.5743673,
@@ -240,15 +240,15 @@
     "semantic_hash": "d2ada97e408d03ba13cd11900f6f1742"
   },
   "src/components/layout/BottomNav.tsx": {
-    "mtime": 1791218879.3905256,
-    "seen": 1791219417.8762205,
-    "ast_hash": "ddd87aff6ec293522480aa082625a352",
+    "mtime": 1791290649.2496974,
+    "seen": 1791290681.1569326,
+    "ast_hash": "50e608daf7fc7c5a66a4c68a4f05eb4f",
     "semantic_hash": ""
   },
   "src/components/layout/Header.tsx": {
-    "mtime": 1791237506.0614672,
-    "seen": 1791237600.2047873,
-    "ast_hash": "3c657d6e2ca3fea1245691615f234ed7",
+    "mtime": 1791316272.0562193,
+    "seen": 1791316328.889595,
+    "ast_hash": "0c50efbd6664c79519491426c43108ce",
     "semantic_hash": ""
   },
   "src/components/layout/MarketStatusPill.tsx": {
@@ -264,27 +264,27 @@
     "semantic_hash": ""
   },
   "src/components/layout/ThemeToggle.tsx": {
-    "mtime": 1790967823.1019733,
-    "seen": 1791148474.3543806,
-    "ast_hash": "92994a0ba80f450bc06c522b41e4b07f",
-    "semantic_hash": "92994a0ba80f450bc06c522b41e4b07f"
+    "mtime": 1791316264.011368,
+    "seen": 1791316328.8900168,
+    "ast_hash": "827c79af96c26b9322580a480b234a54",
+    "semantic_hash": ""
   },
   "src/components/market/AssetDetailPage.tsx": {
-    "mtime": 1791218868.7921546,
-    "seen": 1791219417.8767629,
-    "ast_hash": "5cb811a44bac9e55a402a8c05e5567c5",
+    "mtime": 1791302982.075381,
+    "seen": 1791303019.2777836,
+    "ast_hash": "c7d6c920ec630eb9dae0ecf58a56adcd",
     "semantic_hash": ""
   },
   "src/components/market/AssetIcon.tsx": {
-    "mtime": 1791218868.7921546,
-    "seen": 1791219417.8767653,
-    "ast_hash": "e937c7507d2571626b9e60c526ef91ef",
+    "mtime": 1791294156.117016,
+    "seen": 1791294199.8002894,
+    "ast_hash": "51be5dc2caa318d751cd31a4d4c3dd7b",
     "semantic_hash": ""
   },
   "src/components/market/AssetRow.tsx": {
-    "mtime": 1791238170.0720441,
-    "seen": 1791238212.551206,
-    "ast_hash": "e3984de82877cb125b0442f7822f2ac9",
+    "mtime": 1791293174.9075744,
+    "seen": 1791293658.085158,
+    "ast_hash": "c4e61ac615e05267886633f240031520",
     "semantic_hash": ""
   },
   "src/components/market/FavoriteButton.tsx": {
@@ -293,23 +293,17 @@
     "ast_hash": "9477515859bcb0003327635e12de9c47",
     "semantic_hash": "9477515859bcb0003327635e12de9c47"
   },
-  "src/components/market/MarketStatusStrip.tsx": {
-    "mtime": 1791238219.9775007,
-    "seen": 1791238232.1289408,
-    "ast_hash": "fb47f3fde9bd091c13797646bfbeea33",
-    "semantic_hash": ""
-  },
   "src/components/market/MarketsExplorer.tsx": {
-    "mtime": 1791238177.5568519,
-    "seen": 1791238212.5512815,
-    "ast_hash": "1563dbba1813d27cd024f397e94da75b",
+    "mtime": 1791305088.2168832,
+    "seen": 1791305369.275435,
+    "ast_hash": "3ba673abd96213c777c841eaff851a6f",
     "semantic_hash": ""
   },
   "src/components/market/PriceChart.tsx": {
-    "mtime": 1790971983.3818026,
-    "seen": 1791148474.354385,
-    "ast_hash": "7d3016b680e09e700a12aa45c787ff65",
-    "semantic_hash": "7d3016b680e09e700a12aa45c787ff65"
+    "mtime": 1791294643.1456394,
+    "seen": 1791294723.5076997,
+    "ast_hash": "9a50ee0c56f04d050f79287e44e29876",
+    "semantic_hash": ""
   },
   "src/components/portfolio/AllocationDonut.tsx": {
     "mtime": 1790967440.111734,
@@ -330,10 +324,10 @@
     "semantic_hash": "6327598d7a9e2d238a4111cbde9dd000"
   },
   "src/components/trading/TradeSheet.tsx": {
-    "mtime": 1790971873.765407,
-    "seen": 1791148474.3543878,
-    "ast_hash": "959202889ff2adaea5f88f17630b56b4",
-    "semantic_hash": "959202889ff2adaea5f88f17630b56b4"
+    "mtime": 1791298894.4220843,
+    "seen": 1791299459.661567,
+    "ast_hash": "f326a43476a411e7427c6889b94c0664",
+    "semantic_hash": ""
   },
   "src/components/ui/BackButton.tsx": {
     "mtime": 1790970679.510128,
@@ -395,28 +389,16 @@
     "ast_hash": "6ccb01643989c7c5b44bebf998a04ff8",
     "semantic_hash": "6ccb01643989c7c5b44bebf998a04ff8"
   },
-  "src/components/wallet/DepositRequestForm.tsx": {
-    "mtime": 1790954850.0581045,
-    "seen": 1791148474.3543944,
-    "ast_hash": "2b511c90e35677294765f268aca2da97",
-    "semantic_hash": "2b511c90e35677294765f268aca2da97"
-  },
-  "src/components/wallet/WithdrawalRequestForm.tsx": {
-    "mtime": 1790954857.2538178,
-    "seen": 1791148474.354395,
-    "ast_hash": "cf8064ab155431e1853557774963393d",
-    "semantic_hash": "cf8064ab155431e1853557774963393d"
-  },
   "src/i18n/messages/en.json": {
-    "mtime": 1791221366.6978216,
-    "seen": 1791221492.1299424,
-    "ast_hash": "d83c3cf44c7884aa33ffc9f34659653b",
+    "mtime": 1791299399.5415728,
+    "seen": 1791299459.6645951,
+    "ast_hash": "6cb858c8c17700e102073e856c5c09a6",
     "semantic_hash": ""
   },
   "src/i18n/messages/tr.json": {
-    "mtime": 1791221366.6978216,
-    "seen": 1791221492.129945,
-    "ast_hash": "d75b56f73f64aa30167af0cf368b7452",
+    "mtime": 1791299399.5415728,
+    "seen": 1791299459.664598,
+    "ast_hash": "51b12ff938d4206d7bad5c96e6b659c0",
     "semantic_hash": ""
   },
   "src/i18n/navigation.ts": {
@@ -486,16 +468,16 @@
     "semantic_hash": "397ecda7924d8787476269b57257ef09"
   },
   "src/lib/market-data/asset-routes.ts": {
-    "mtime": 1791212935.6422143,
-    "seen": 1791213302.6645327,
+    "mtime": 1791293279.5511923,
+    "seen": 1791293658.0877821,
     "ast_hash": "547a8560b3e46fd376889615194264bc",
     "semantic_hash": ""
   },
   "src/lib/market-data/cached-provider.ts": {
-    "mtime": 1790955606.0705774,
-    "seen": 1791148474.3544042,
-    "ast_hash": "972b9133e29382be58f3160158929bf0",
-    "semantic_hash": "972b9133e29382be58f3160158929bf0"
+    "mtime": 1791307379.482234,
+    "seen": 1791307419.849897,
+    "ast_hash": "9b91048c76a09e5a57ad4849c964c089",
+    "semantic_hash": ""
   },
   "src/lib/market-data/get-history.ts": {
     "mtime": 1790967572.5977619,
@@ -540,10 +522,10 @@
     "semantic_hash": "818ef467c87136ec7baf5d49eb0fe501"
   },
   "src/lib/market-data/providers/truncgil-provider.ts": {
-    "mtime": 1790967564.8976429,
-    "seen": 1791148474.3544095,
-    "ast_hash": "7016c48c0e142ddf36841687304d0ec5",
-    "semantic_hash": "7016c48c0e142ddf36841687304d0ec5"
+    "mtime": 1791293979.2856405,
+    "seen": 1791294199.8036869,
+    "ast_hash": "61d03a054e41f44b554152b961692c27",
+    "semantic_hash": ""
   },
   "src/lib/market-data/providers/unconfigured-provider.ts": {
     "mtime": 1790955360.6654723,
@@ -564,16 +546,16 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/registry.ts": {
-    "mtime": 1791212928.3015914,
-    "seen": 1791213302.6653535,
-    "ast_hash": "c2bca5d95efd2857d01d81660dce1b55",
+    "mtime": 1791307219.4515426,
+    "seen": 1791307419.8509104,
+    "ast_hash": "f5cab8fb93417bb6e54c06d3840ef8bc",
     "semantic_hash": ""
   },
   "src/lib/market-data/resolve-price.ts": {
-    "mtime": 1790971650.651982,
-    "seen": 1791148474.3544128,
-    "ast_hash": "bc96a34446c72e77a99ffacd38129a11",
-    "semantic_hash": "bc96a34446c72e77a99ffacd38129a11"
+    "mtime": 1791290558.589092,
+    "seen": 1791290681.1676257,
+    "ast_hash": "f9eff1e242247663f9d718ee6f3b385f",
+    "semantic_hash": ""
   },
   "src/lib/market-data/types/index.ts": {
     "mtime": 1790955334.9022603,
@@ -594,10 +576,10 @@
     "semantic_hash": "4519e6c48d5e16b38c523612b8002161"
   },
   "src/lib/portfolio/summary.ts": {
-    "mtime": 1790967253.7075915,
-    "seen": 1791148474.3544154,
-    "ast_hash": "4cafc5b6f1cb93e68c0de10ed9cd28db",
-    "semantic_hash": "4cafc5b6f1cb93e68c0de10ed9cd28db"
+    "mtime": 1791306004.450974,
+    "seen": 1791306102.2182746,
+    "ast_hash": "4cd57d87e9022f986959485c47536a01",
+    "semantic_hash": ""
   },
   "src/lib/prisma/client.ts": {
     "mtime": 1790952711.1284497,
@@ -618,22 +600,22 @@
     "semantic_hash": "01764b88dad286dc394ed2e3f7eee975"
   },
   "src/lib/trading/actions.ts": {
-    "mtime": 1790954209.4751174,
-    "seen": 1791148474.3544176,
-    "ast_hash": "3aeb413ea3536cc49ecef69c0ec3e5d7",
-    "semantic_hash": "3aeb413ea3536cc49ecef69c0ec3e5d7"
+    "mtime": 1791302358.648353,
+    "seen": 1791302488.2693472,
+    "ast_hash": "9fc1b07a1e49da5382884ec578a033da",
+    "semantic_hash": ""
   },
   "src/lib/trading/engine.ts": {
-    "mtime": 1790967876.14005,
-    "seen": 1791148474.3544183,
-    "ast_hash": "c53d2a136477c11102e358dcb9d45e02",
-    "semantic_hash": "c53d2a136477c11102e358dcb9d45e02"
+    "mtime": 1791305954.2620082,
+    "seen": 1791306102.219107,
+    "ast_hash": "b46e339af1b3ecbf3b46e1922285ba8d",
+    "semantic_hash": ""
   },
   "src/lib/trading/errors.ts": {
-    "mtime": 1790953931.8290243,
-    "seen": 1791148474.354419,
-    "ast_hash": "483836e656c535663a116a95b0d58c87",
-    "semantic_hash": "483836e656c535663a116a95b0d58c87"
+    "mtime": 1791305927.2671137,
+    "seen": 1791306102.2191083,
+    "ast_hash": "caf5f9a3ccb3788fb86990e5cd0548a1",
+    "semantic_hash": ""
   },
   "src/lib/trading/schemas.ts": {
     "mtime": 1790954203.1427834,
@@ -654,10 +636,10 @@
     "semantic_hash": "e676449578b5625642097dd7aa0eb8cc"
   },
   "src/lib/wallet/actions.ts": {
-    "mtime": 1790954549.92589,
-    "seen": 1791148474.3544211,
-    "ast_hash": "23b0c1823260e9fcbe6a182088b32fce",
-    "semantic_hash": "23b0c1823260e9fcbe6a182088b32fce"
+    "mtime": 1791299899.7527344,
+    "seen": 1791299924.0424044,
+    "ast_hash": "bd18320d5435522e8c83a9eb41ffb0c7",
+    "semantic_hash": ""
   },
   "src/lib/wallet/admin-actions.ts": {
     "mtime": 1790954582.7445335,
@@ -666,10 +648,10 @@
     "semantic_hash": "8eda36bc504d0aee4d0b86fe16c01e7b"
   },
   "src/lib/wallet/schemas.ts": {
-    "mtime": 1790954540.3615298,
-    "seen": 1791148474.3544226,
-    "ast_hash": "da0837ca96a90bc0d7f06b906aa2cc15",
-    "semantic_hash": "da0837ca96a90bc0d7f06b906aa2cc15"
+    "mtime": 1791299324.2311022,
+    "seen": 1791299459.6751573,
+    "ast_hash": "e7dd1aaa3a260ebe0f41db6fdd901e18",
+    "semantic_hash": ""
   },
   "src/lib/watchlist/actions.ts": {
     "mtime": 1790971765.6628072,
@@ -732,27 +714,27 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/bannerlar/page.tsx": {
-    "mtime": 1791213020.2294478,
-    "seen": 1791213302.660714,
-    "ast_hash": "5e5e2d05e07b2f42facb5a0a32023b9a",
+    "mtime": 1791319367.893735,
+    "seen": 1791319398.7748516,
+    "ast_hash": "fcea7caf02b9a2a31c8e28990257dcc1",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/haberler/page.tsx": {
-    "mtime": 1791213015.1408563,
-    "seen": 1791213302.6607156,
-    "ast_hash": "c1d2c8aaf1f3b4be40d8c34f6b99f6e0",
+    "mtime": 1791319840.041851,
+    "seen": 1791319938.1576521,
+    "ast_hash": "ba93e685da7c546196732cd97b1bef01",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/varliklar/page.tsx": {
-    "mtime": 1791213009.8717773,
-    "seen": 1791213302.660884,
-    "ast_hash": "97b4e33031df683cb6d560f1acba68a2",
+    "mtime": 1791319805.5291228,
+    "seen": 1791319938.1581125,
+    "ast_hash": "002587d3ba006dd28583258785b922b2",
     "semantic_hash": ""
   },
   "src/components/admin/ContentForms.tsx": {
-    "mtime": 1791221375.324004,
-    "seen": 1791221492.1213286,
-    "ast_hash": "37d86fb272009b68fa007a1a0c358c05",
+    "mtime": 1791319381.6710582,
+    "seen": 1791319398.7782178,
+    "ast_hash": "45fb587ff03790193871535df2a70026",
     "semantic_hash": ""
   },
   "src/components/dashboard/HomeBanners.tsx": {
@@ -768,9 +750,9 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/providers/yahoo-finance-provider.ts": {
-    "mtime": 1791219806.1738496,
-    "seen": 1791220019.8392186,
-    "ast_hash": "105cc043c13f5c7dde3b7b18755d8f08",
+    "mtime": 1791291757.8199694,
+    "seen": 1791291788.9586842,
+    "ast_hash": "60ff0ad6555e9e92ae7e1e4bf12ea3ee",
     "semantic_hash": ""
   },
   "src/lib/market-data/providers/yahoo-us-provider.ts": {
@@ -1613,34 +1595,22 @@
     "ast_hash": "56d841e7f9c3a97f804563a7335dd53c",
     "semantic_hash": ""
   },
-  "src/app/[locale]/(app)/halka-arz/[code]/page.tsx": {
-    "mtime": 1791218868.798154,
-    "seen": 1791219417.8706498,
-    "ast_hash": "17783d1f29b8ed05277bdd60db211e72",
-    "semantic_hash": ""
-  },
   "src/app/[locale]/(app)/halka-arz/page.tsx": {
-    "mtime": 1791218868.798154,
-    "seen": 1791219417.8706517,
-    "ast_hash": "5b62272f4593dd93ed22797d596ff934",
-    "semantic_hash": ""
-  },
-  "src/app/[locale]/(app)/mobil/page.tsx": {
-    "mtime": 1791218868.798154,
-    "seen": 1791219417.87086,
-    "ast_hash": "08d1e5b2491b429f50f11d2a25867224",
+    "mtime": 1791317805.9886658,
+    "seen": 1791317850.2415972,
+    "ast_hash": "5157e7ef3e1dadbb560c435102a15e6d",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/odulller/page.tsx": {
-    "mtime": 1791218868.799154,
-    "seen": 1791219417.8708625,
-    "ast_hash": "4c09e9e43345c737caee39f291de8440",
+    "mtime": 1791318451.0576055,
+    "seen": 1791318537.5723345,
+    "ast_hash": "8e7faab77b76c7800737cb0998c8f24e",
     "semantic_hash": ""
   },
   "src/components/dashboard/QuickActions.tsx": {
-    "mtime": 1791219853.0539715,
-    "seen": 1791220019.834273,
-    "ast_hash": "6594cb877d09fd27a1cd3db32af0427f",
+    "mtime": 1791319367.893735,
+    "seen": 1791319398.7828882,
+    "ast_hash": "64a74faf09f80b32c7f3470fe992726e",
     "semantic_hash": ""
   },
   "src/components/referrals/ShareInvite.tsx": {
@@ -1680,9 +1650,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/HomeIpoBanner.tsx": {
-    "mtime": 1791219861.5060253,
-    "seen": 1791220019.8341267,
-    "ast_hash": "2567b0ccac21bffd5b7cf96a7bc37b8c",
+    "mtime": 1791308617.6484375,
+    "seen": 1791308702.871461,
+    "ast_hash": "973f20b5e2e8da60488fa0bdbb6bfa3a",
     "semantic_hash": ""
   },
   "src/components/dashboard/PromoCarousel.tsx": {
@@ -1692,27 +1662,27 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/fonlar/page.tsx": {
-    "mtime": 1791218868.7971544,
-    "seen": 1791219417.8706455,
-    "ast_hash": "78f43c7a773b22ac8f70b4646fdbfe83",
+    "mtime": 1791317800.1712067,
+    "seen": 1791317850.2413948,
+    "ast_hash": "e87838c85f83dd566200c2e32d4694cf",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/fonlar/page.tsx": {
-    "mtime": 1791218332.861524,
-    "seen": 1791218390.3781214,
-    "ast_hash": "0ca0785bc813e71acd143d20b72c8559",
+    "mtime": 1791319153.8482502,
+    "seen": 1791319398.7748544,
+    "ast_hash": "13443b466ff03f04037e828783558f4c",
     "semantic_hash": ""
   },
   "src/components/funds/FundsList.tsx": {
-    "mtime": 1791218868.790155,
-    "seen": 1791219417.876218,
-    "ast_hash": "5c1a0d1eb935f5a63939150ca6ec1de5",
+    "mtime": 1791318500.4708743,
+    "seen": 1791318537.575829,
+    "ast_hash": "0f94c2462937afa7d13b214bd24dbdaf",
     "semantic_hash": ""
   },
   "mock/yatirim-fon.html": {
-    "mtime": 1791218229.6760252,
-    "seen": 1791218390.402953,
-    "ast_hash": "26a6460d199130b33cc36c20ceabb7fc",
+    "mtime": 1791317368.963275,
+    "seen": 1791317370.747243,
+    "ast_hash": "b55d008d4a3f879b36d9bd0cbc7cc3de",
     "semantic_hash": ""
   },
   "mock/login.html": {
@@ -1740,9 +1710,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/site/page.tsx": {
-    "mtime": 1791221355.1602502,
-    "seen": 1791221492.1203358,
-    "ast_hash": "07fcadc14a8b7b5cd25bc9535a897c49",
+    "mtime": 1791319145.499555,
+    "seen": 1791319398.7748787,
+    "ast_hash": "ca219136563b13cd274008268caa1d48",
     "semantic_hash": ""
   },
   "src/lib/admin/site-actions.ts": {
@@ -1758,15 +1728,789 @@
     "semantic_hash": ""
   },
   "src/components/layout/AppHeader.tsx": {
-    "mtime": 1791237501.536301,
-    "seen": 1791237600.2045538,
-    "ast_hash": "a08f1964b2a2308a4470221f880f8144",
+    "mtime": 1791318240.6851983,
+    "seen": 1791318267.0570962,
+    "ast_hash": "08766a255e9b86677a152d8a89e3fc87",
     "semantic_hash": ""
   },
   "mock/piyasalar.html": {
     "mtime": 1791237258.5828013,
     "seen": 1791237600.2301483,
     "ast_hash": "84b40b00a1e946350d607023c8dcc255",
+    "semantic_hash": ""
+  },
+  "mock/asset-detail.html": {
+    "mtime": 1791290406.5386171,
+    "seen": 1791290681.172517,
+    "ast_hash": "2a00d8e5de635b95787414f50f109894",
+    "semantic_hash": ""
+  },
+  "mock/islem.html": {
+    "mtime": 1791298043.859868,
+    "seen": 1791298227.964658,
+    "ast_hash": "33f7390cafb0eb6c240ce75f4c0a29e3",
+    "semantic_hash": ""
+  },
+  "data/news.json": {
+    "mtime": 1791293615.7209516,
+    "seen": 1791293658.0802808,
+    "ast_hash": "452830cdcb5c3037ebfab2ba5ea205a2",
+    "semantic_hash": ""
+  },
+  "src/components/news/NewsList.tsx": {
+    "mtime": 1791293630.3599963,
+    "seen": 1791293658.0853047,
+    "ast_hash": "ce67a943d5c0570b05724a9e39fa5be0",
+    "semantic_hash": ""
+  },
+  "src/lib/news/feed.ts": {
+    "mtime": 1791307495.2170725,
+    "seen": 1791307697.1950111,
+    "ast_hash": "71a56de4127f72c0678e1e4eb45bb2ad",
+    "semantic_hash": ""
+  },
+  "src/lib/market-data/providers/commodity-provider.ts": {
+    "mtime": 1791294156.117016,
+    "seen": 1791294199.8034053,
+    "ast_hash": "241bc7bd7165bcec11fd4a32fe5179a0",
+    "semantic_hash": ""
+  },
+  "src/components/auth/LegalModal.tsx": {
+    "mtime": 1791295067.811013,
+    "seen": 1791295081.9065735,
+    "ast_hash": "540d7db0845b5e914e7070fbb4e87a83",
+    "semantic_hash": ""
+  },
+  "src/lib/legal/texts.ts": {
+    "mtime": 1791295062.8806362,
+    "seen": 1791295081.9110916,
+    "ast_hash": "7e212ec23dcf07b07d31de2464e9a9ff",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/cuzdan/para-cek/page.tsx": {
+    "mtime": 1791299383.2918766,
+    "seen": 1791299459.6478405,
+    "ast_hash": "f66fd89d7d49eeaf8fd022fdb196e63b",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/cuzdan/para-yatir/page.tsx": {
+    "mtime": 1791299383.2630706,
+    "seen": 1791299459.6478446,
+    "ast_hash": "edccc5fd4f5f084b488de48ee08c6d8e",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/cuzdan/vadeli-mevduat/page.tsx": {
+    "mtime": 1791302947.7503195,
+    "seen": 1791303019.2724977,
+    "ast_hash": "65d6c251080512efeffc0be98648bfda",
+    "semantic_hash": ""
+  },
+  "src/components/ui/BottomSheet.tsx": {
+    "mtime": 1791302105.981334,
+    "seen": 1791302169.160467,
+    "ast_hash": "f0593b046e54658418ebe86956769656",
+    "semantic_hash": ""
+  },
+  "src/components/ui/PageTopBar.tsx": {
+    "mtime": 1791295372.127589,
+    "seen": 1791295532.354796,
+    "ast_hash": "9945f178ca9fd17a00fc244cfcda5202",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/TermDepositView.tsx": {
+    "mtime": 1791302933.1371415,
+    "seen": 1791303019.280465,
+    "ast_hash": "b016b04656138cb6610e4849ce1d255d",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/WalletView.tsx": {
+    "mtime": 1791306501.8667645,
+    "seen": 1791306540.416765,
+    "ast_hash": "d497c065ca33649fde55aa8fb23cdd01",
+    "semantic_hash": ""
+  },
+  "mock/cuzdan.html": {
+    "mtime": 1791295171.751634,
+    "seen": 1791295532.3714602,
+    "ast_hash": "2191fc83b66c63c455c18b6df23d55e5",
+    "semantic_hash": ""
+  },
+  "mock/vadeli-mevduat.html": {
+    "mtime": 1791295280.783724,
+    "seen": 1791295532.3725114,
+    "ast_hash": "76dcc9202e3a953c026d5beb0a8fcbf8",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/vadeli-mevduat/page.tsx": {
+    "mtime": 1791319843.3339036,
+    "seen": 1791319938.1581113,
+    "ast_hash": "4deaf978a70bc45c0cef5f0ef980224b",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/term-deposit-actions.ts": {
+    "mtime": 1791295721.4388125,
+    "seen": 1791295793.0122433,
+    "ast_hash": "4b0216a5396bbfd68b7deec4afe97b6d",
+    "semantic_hash": ""
+  },
+  "src/lib/term-deposit/actions.ts": {
+    "mtime": 1791298029.255304,
+    "seen": 1791298227.958667,
+    "ast_hash": "6351d15f938b2e79908b7a84c2472c0b",
+    "semantic_hash": ""
+  },
+  "src/lib/term-deposit/amount.ts": {
+    "mtime": 1791298029.206048,
+    "seen": 1791298227.9586706,
+    "ast_hash": "1653098a515e74448cd39e99204a944a",
+    "semantic_hash": ""
+  },
+  "src/lib/term-deposit/interest.ts": {
+    "mtime": 1791298054.754,
+    "seen": 1791298227.958673,
+    "ast_hash": "66f968e8ec9acef6088f43d1abf3df61",
+    "semantic_hash": ""
+  },
+  "src/lib/term-deposit/service.ts": {
+    "mtime": 1791304352.3770914,
+    "seen": 1791304516.1202636,
+    "ast_hash": "b595fa58da7aaf8aca2a2a4eb111e401",
+    "semantic_hash": ""
+  },
+  "mock/varlik.html": {
+    "mtime": 1791298136.365347,
+    "seen": 1791298227.9659927,
+    "ast_hash": "d636f08d7e0a6c37b322570069122bc2",
+    "semantic_hash": ""
+  },
+  "src/components/trading/AssetPicker.tsx": {
+    "mtime": 1791298282.7210968,
+    "seen": 1791298326.4003267,
+    "ast_hash": "707c80099434aecddd737929219c62e1",
+    "semantic_hash": ""
+  },
+  "src/components/trading/TradeTerminal.tsx": {
+    "mtime": 1791305976.593709,
+    "seen": 1791306102.213182,
+    "ast_hash": "026351515f3f11481b99710de0dabde4",
+    "semantic_hash": ""
+  },
+  "src/components/ui/Toaster.tsx": {
+    "mtime": 1791298820.6916292,
+    "seen": 1791298881.6522865,
+    "ast_hash": "8247b67b4fddcbc36129fb497ae4e166",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/kripto-adresleri/page.tsx": {
+    "mtime": 1791320147.3203256,
+    "seen": 1791321202.5837388,
+    "ast_hash": "642e17c6d39d536acf82a264f325781f",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/WalletFlow.tsx": {
+    "mtime": 1791321079.0217893,
+    "seen": 1791321202.6006868,
+    "ast_hash": "2913613c29002457824d99aac79c9def",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/crypto-address-actions.ts": {
+    "mtime": 1791299399.4247456,
+    "seen": 1791299459.6653516,
+    "ast_hash": "05024e0d6d0ff14cf8a4453fe70bf189",
+    "semantic_hash": ""
+  },
+  "src/lib/wallet/load.ts": {
+    "mtime": 1791321079.0207937,
+    "seen": 1791321202.619346,
+    "ast_hash": "0170bbdbca22629e1c0ec186a25c7181",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/BalanceCard.tsx": {
+    "mtime": 1791321187.2333403,
+    "seen": 1791321202.5997212,
+    "ast_hash": "4f3da797403dcf982c81e43902d53eb9",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/banka-hesaplari/page.tsx": {
+    "mtime": 1791320925.4083157,
+    "seen": 1791321202.5828147,
+    "ast_hash": "88c00150d519fd4644a99e26af518867",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/bank-account-actions.ts": {
+    "mtime": 1791301725.6306846,
+    "seen": 1791301828.3864217,
+    "ast_hash": "ec2a2d72c75895764dc5b172f4732db0",
+    "semantic_hash": ""
+  },
+  "src/lib/trading/session.ts": {
+    "mtime": 1791317328.974791,
+    "seen": 1791317370.7452478,
+    "ast_hash": "9bd8f034406e1cfa2a02a54c054b2a58",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/CurrencyConvertCard.tsx": {
+    "mtime": 1791305131.56032,
+    "seen": 1791305369.2791069,
+    "ast_hash": "e717ba8d0d561ac04f7b4524b04919d5",
+    "semantic_hash": ""
+  },
+  "src/lib/wallet/fx-actions.ts": {
+    "mtime": 1791303784.0124938,
+    "seen": 1791303833.4512658,
+    "ast_hash": "6714e9d80ebe9990abd3068dfc200198",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/CurrencyFlag.tsx": {
+    "mtime": 1791303913.8353374,
+    "seen": 1791303981.2404385,
+    "ast_hash": "db8e759950b41b4372f029c2823bdce5",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/WalletHistory.tsx": {
+    "mtime": 1791305208.4970868,
+    "seen": 1791305369.2796555,
+    "ast_hash": "535f778d6503b723138bce6908086bce",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/UsdTransferForm.tsx": {
+    "mtime": 1791305131.5593133,
+    "seen": 1791305369.2794785,
+    "ast_hash": "625cbb25256172d0b19ef081d6d80918",
+    "semantic_hash": ""
+  },
+  "src/components/wallet/PositionSheets.tsx": {
+    "mtime": 1791306591.4513443,
+    "seen": 1791306628.6760108,
+    "ast_hash": "0c0aa44deb88ce1025855c72e1a13042",
+    "semantic_hash": ""
+  },
+  "src/components/layout/AutoRefresh.tsx": {
+    "mtime": 1791307235.6335757,
+    "seen": 1791307419.84545,
+    "ast_hash": "efd60f0d5864f2b686fb581aa1105b86",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/halka-arz/page.tsx": {
+    "mtime": 1791319838.9266365,
+    "seen": 1791319938.157654,
+    "ast_hash": "6ab3f94dca992bd1faa726c53a16ee68",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/feed-actions.ts": {
+    "mtime": 1791307511.3957975,
+    "seen": 1791307697.192576,
+    "ast_hash": "c038e678ca9593cf51dd2929d0f47bd8",
+    "semantic_hash": ""
+  },
+  "src/lib/ipo/sync.ts": {
+    "mtime": 1791308560.2536569,
+    "seen": 1791308702.8969667,
+    "ast_hash": "c5d7aa37877a89ec488122d26606db6d",
+    "semantic_hash": ""
+  },
+  "src/lib/news/sync.ts": {
+    "mtime": 1791307489.6227248,
+    "seen": 1791307697.1950126,
+    "ast_hash": "4c49e79f019533a78c0186d2a3d890e9",
+    "semantic_hash": ""
+  },
+  "src/components/ipo/IpoList.tsx": {
+    "mtime": 1791308633.1037521,
+    "seen": 1791308702.873255,
+    "ast_hash": "ff6eb6917fba6d35dde81c895888649b",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/ayarlar/page.tsx": {
+    "mtime": 1791317328.974791,
+    "seen": 1791317370.7321928,
+    "ast_hash": "691ad9e362987378eda6ea2087427f7e",
+    "semantic_hash": ""
+  },
+  "src/components/settings/ThemeSwitchRow.tsx": {
+    "mtime": 1791316643.2882514,
+    "seen": 1791316696.959414,
+    "ast_hash": "0de0681b0ee0cbafa530814290aee0ea",
+    "semantic_hash": ""
+  },
+  "mock/ayarlar.html": {
+    "mtime": 1791312607.80764,
+    "seen": 1791316328.914812,
+    "ast_hash": "5a837494081d5c6074b6c253e6111a5c",
+    "semantic_hash": ""
+  },
+  "mock/profil.html": {
+    "mtime": 1791312599.2116156,
+    "seen": 1791316328.915762,
+    "ast_hash": "b4b605e19bda30d447652e5166cddc58",
+    "semantic_hash": ""
+  },
+  "src/components/dashboard/MobileInstallAction.tsx": {
+    "mtime": 1791316663.7629876,
+    "seen": 1791316696.9571736,
+    "ast_hash": "c4ad3edf87d9456321c45a6b7648299a",
+    "semantic_hash": ""
+  },
+  "src/components/settings/NotificationSwitchRow.tsx": {
+    "mtime": 1791316644.4036102,
+    "seen": 1791316696.9594102,
+    "ast_hash": "ab05659080468b33b0186b928420ebaa",
+    "semantic_hash": ""
+  },
+  "src/components/settings/SettingsRow.tsx": {
+    "mtime": 1791316651.0485134,
+    "seen": 1791316696.9594116,
+    "ast_hash": "e7b5f45a612bf0ee774ebcf5f0852d83",
+    "semantic_hash": ""
+  },
+  "src/components/ui/Switch.tsx": {
+    "mtime": 1791316631.1458113,
+    "seen": 1791316696.9607093,
+    "ast_hash": "46ea7bd45fbb76c2db7d7d5d46dd8cff",
+    "semantic_hash": ""
+  },
+  "src/components/settings/AccountChangeRows.tsx": {
+    "mtime": 1791317319.9505968,
+    "seen": 1791317370.738252,
+    "ast_hash": "715031449d7b11bba1040c12c1f0aeee",
+    "semantic_hash": ""
+  },
+  "src/lib/auth/account-actions.ts": {
+    "mtime": 1791317311.5657327,
+    "seen": 1791317370.7414002,
+    "ast_hash": "6456426117c1a13e41f8c63172f7c97b",
+    "semantic_hash": ""
+  },
+  "src/components/profile/KycUploader.tsx": {
+    "mtime": 1791317817.063186,
+    "seen": 1791317850.2464762,
+    "ast_hash": "012f9eb64a87486a8ae0de80736db809",
+    "semantic_hash": ""
+  },
+  "src/components/profile/ProfileInfoForm.tsx": {
+    "mtime": 1791317855.3781748,
+    "seen": 1791318041.1861548,
+    "ast_hash": "79382d3a5d68547d5411937e909dae1a",
+    "semantic_hash": ""
+  },
+  "src/lib/funds/actions.ts": {
+    "mtime": 1791318155.0626705,
+    "seen": 1791318267.06245,
+    "ast_hash": "83fcaaf3fa715d027a9c80a25775b9f1",
+    "semantic_hash": ""
+  },
+  "src/lib/funds/constants.ts": {
+    "mtime": 1791317787.9551,
+    "seen": 1791317850.25064,
+    "ast_hash": "fe2c2d4fa442944f1246d504c6359ff4",
+    "semantic_hash": ""
+  },
+  "src/lib/funds/service.ts": {
+    "mtime": 1791318154.9924088,
+    "seen": 1791318267.0625257,
+    "ast_hash": "0f13c8c37e4d9ec3754748ffd3246229",
+    "semantic_hash": ""
+  },
+  "src/lib/profile/actions.ts": {
+    "mtime": 1791318978.2519665,
+    "seen": 1791319398.831515,
+    "ast_hash": "e17988678739d6ad29e51f356af3f8ce",
+    "semantic_hash": ""
+  },
+  "mock/odul.html": {
+    "mtime": 1791317641.1599517,
+    "seen": 1791317850.255934,
+    "ast_hash": "f7ab1e3f78b66d36cd533be40dcebbb7",
+    "semantic_hash": ""
+  },
+  "src/components/rewards/CampaignCard.tsx": {
+    "mtime": 1791318450.9979763,
+    "seen": 1791318537.5774598,
+    "ast_hash": "4f60795262136f2bdf3b369dff47d0a0",
+    "semantic_hash": ""
+  },
+  "mock/davet.html": {
+    "mtime": 1791317982.6447694,
+    "seen": 1791318041.19591,
+    "ast_hash": "bf0ab5db1956813290f79494c8de044e",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/davet/page.tsx": {
+    "mtime": 1791318523.099458,
+    "seen": 1791318537.571951,
+    "ast_hash": "8c124f2e2c6815f4b1fa6650a0c71c2b",
+    "semantic_hash": ""
+  },
+  "src/components/referrals/InviteProgram.tsx": {
+    "mtime": 1791318232.0744438,
+    "seen": 1791318267.0584364,
+    "ast_hash": "7e171caeef5e23ec79a35c209a34d83d",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/kampanyalar/page.tsx": {
+    "mtime": 1791319153.8482502,
+    "seen": 1791319398.7748613,
+    "ast_hash": "92ee7c3025324ff286b1a6cb2c76d256",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/kullanicilar/[id]/page.tsx": {
+    "mtime": 1791319036.4294126,
+    "seen": 1791319398.774866,
+    "ast_hash": "6b7579b11ba3944e2e4061a7c2a78cae",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/kullanicilar/page.tsx": {
+    "mtime": 1791319036.4294126,
+    "seen": 1791319398.7748682,
+    "ast_hash": "99c8c11f7a58979f202bd9c48960ad7f",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/layout.tsx": {
+    "mtime": 1791318728.0688193,
+    "seen": 1791319398.77487,
+    "ast_hash": "997b32294bf79478c65334a1d8291766",
+    "semantic_hash": ""
+  },
+  "src/app/api/admin/kyc/[docId]/route.ts": {
+    "mtime": 1791318970.9503975,
+    "seen": 1791319398.7751632,
+    "ast_hash": "401ecb18de1fade2478dd45c043a87e2",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AdminForm.tsx": {
+    "mtime": 1791318758.981308,
+    "seen": 1791319398.7782016,
+    "ast_hash": "c3f10fbbb6e1cc160e885cf1df38d73a",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AdminShell.tsx": {
+    "mtime": 1791319909.8741703,
+    "seen": 1791319938.1585042,
+    "ast_hash": "511bf219e97f0bcad32cd8896d2dfa92",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AdminUi.tsx": {
+    "mtime": 1791321120.4485986,
+    "seen": 1791321202.5864255,
+    "ast_hash": "b94a87c206ec3b287bddf147226cec04",
+    "semantic_hash": ""
+  },
+  "src/components/admin/BannerEditor.tsx": {
+    "mtime": 1791319358.387771,
+    "seen": 1791319398.7782114,
+    "ast_hash": "c7b612d7d8aeab15e111b9bae6a55f20",
+    "semantic_hash": ""
+  },
+  "src/components/admin/CampaignEditor.tsx": {
+    "mtime": 1791318772.5533895,
+    "seen": 1791319398.7782137,
+    "ast_hash": "b4be39462d283122853ddf2cf251937a",
+    "semantic_hash": ""
+  },
+  "src/components/admin/DeleteButton.tsx": {
+    "mtime": 1791319004.1950016,
+    "seen": 1791319398.7782197,
+    "ast_hash": "1e13a50a894a570fdde010b4e760b0f7",
+    "semantic_hash": ""
+  },
+  "src/components/admin/FundEditor.tsx": {
+    "mtime": 1791318835.3832586,
+    "seen": 1791319398.7782218,
+    "ast_hash": "d048a11ba4b98999a583112ffb87cc6f",
+    "semantic_hash": ""
+  },
+  "src/components/admin/ImageField.tsx": {
+    "mtime": 1791319336.6600008,
+    "seen": 1791319398.7782233,
+    "ast_hash": "4bfe6e844aa3eeaff49e9aa46b3e8203",
+    "semantic_hash": ""
+  },
+  "src/components/admin/RequestCard.tsx": {
+    "mtime": 1791319864.384753,
+    "seen": 1791319938.1590476,
+    "ast_hash": "9032f08df27893868b7f908ae53987cd",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/banner-actions.ts": {
+    "mtime": 1791319357.3125622,
+    "seen": 1791319398.8107667,
+    "ast_hash": "2bfa6c3166f374be367204784a53e38b",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/campaign-actions.ts": {
+    "mtime": 1791318978.2529602,
+    "seen": 1791319398.8107705,
+    "ast_hash": "1d8b0ccd5bdf9b5eed28692393587ae2",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/fund-actions.ts": {
+    "mtime": 1791318989.1319563,
+    "seen": 1791319398.8118718,
+    "ast_hash": "7f26cc5122b45e973baaeeca2b1c5507",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/user-actions.ts": {
+    "mtime": 1791318969.8904183,
+    "seen": 1791319398.8123689,
+    "ast_hash": "f24ef291923e2ab2e253ee059b443c57",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/user-status.ts": {
+    "mtime": 1791319036.3840265,
+    "seen": 1791319398.8123724,
+    "ast_hash": "e02d49c2dc40a0eaeb3d2f8e2e1eb29b",
+    "semantic_hash": ""
+  },
+  "src/lib/uploads/actions.ts": {
+    "mtime": 1791319335.5705173,
+    "seen": 1791319398.8398125,
+    "ast_hash": "ec3ef11cdad303da63879186ef82b360",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AdminFilters.tsx": {
+    "mtime": 1791319882.1146717,
+    "seen": 1791319938.1584227,
+    "ast_hash": "74509182043b49a72aa773aad946ef94",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AdminRecord.tsx": {
+    "mtime": 1791319796.1103768,
+    "seen": 1791319938.1585023,
+    "ast_hash": "8d77298471d2c135eac14f2c179b8ae6",
+    "semantic_hash": ""
+  },
+  "src/components/admin/EntityEditors.tsx": {
+    "mtime": 1791320147.3213208,
+    "seen": 1791321202.5871165,
+    "ast_hash": "b47f9f9784fd6c77b3d8269941571d14",
+    "semantic_hash": ""
+  },
+  "src/components/admin/ProviderBadge.tsx": {
+    "mtime": 1791319734.8566775,
+    "seen": 1791319938.159046,
+    "ast_hash": "9a1117e6185840805107a9c4b7782dd7",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/entity-actions.ts": {
+    "mtime": 1791319764.4519844,
+    "seen": 1791319938.165183,
+    "ast_hash": "9dfba595fe6e27d2ff247cdfb1cbf54e",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/presets.ts": {
+    "mtime": 1791320925.300322,
+    "seen": 1791321202.6034951,
+    "ast_hash": "9d6acce2dd94bbc36e9e45e16993f239",
+    "semantic_hash": ""
+  },
+  "public/banks/README.md": {
+    "mtime": 1791320925.3396008,
+    "seen": 1791321202.6252522,
+    "ast_hash": "40fdd2b87d648d2348f074a4e6ccbd50",
+    "semantic_hash": ""
+  },
+  "public/banks/akbank.svg": {
+    "mtime": 1791320892.8760438,
+    "seen": 1791321202.6252556,
+    "ast_hash": "bf383c9b6e9cb7a16fdf8606aac2267e",
+    "semantic_hash": ""
+  },
+  "public/banks/aktifbank.svg": {
+    "mtime": 1791320895.039769,
+    "seen": 1791321202.6252584,
+    "ast_hash": "3beffff0100f2968022ee29319ac2c14",
+    "semantic_hash": ""
+  },
+  "public/banks/albaraka.svg": {
+    "mtime": 1791320895.710535,
+    "seen": 1791321202.6252606,
+    "ast_hash": "3a69f0dcc15614efa940f8b453007474",
+    "semantic_hash": ""
+  },
+  "public/banks/alternatifbank.svg": {
+    "mtime": 1791320896.7425697,
+    "seen": 1791321202.6252618,
+    "ast_hash": "58614366c0e5f508e46c12dce5be195f",
+    "semantic_hash": ""
+  },
+  "public/banks/anadolubank.svg": {
+    "mtime": 1791320897.706944,
+    "seen": 1791321202.6252635,
+    "ast_hash": "acc468c6c65b18266a131fa6f0a9709d",
+    "semantic_hash": ""
+  },
+  "public/banks/atbank.svg": {
+    "mtime": 1791320898.1062815,
+    "seen": 1791321202.6252651,
+    "ast_hash": "639e8a0dd053fdb4c6cd335188788ab7",
+    "semantic_hash": ""
+  },
+  "public/banks/burgan.svg": {
+    "mtime": 1791320898.806921,
+    "seen": 1791321202.625267,
+    "ast_hash": "58e7bd34e164bd939afda7dc0a94340a",
+    "semantic_hash": ""
+  },
+  "public/banks/citibank.svg": {
+    "mtime": 1791320900.8653512,
+    "seen": 1791321202.625269,
+    "ast_hash": "ed8d4292927b9047a23cfa65087d18d6",
+    "semantic_hash": ""
+  },
+  "public/banks/denizbank.svg": {
+    "mtime": 1791320900.9963212,
+    "seen": 1791321202.6252704,
+    "ast_hash": "af1eac338751c1bf42ed034a71d1a7ac",
+    "semantic_hash": ""
+  },
+  "public/banks/dunyakatilim.svg": {
+    "mtime": 1791320902.4454248,
+    "seen": 1791321202.6252718,
+    "ast_hash": "1d660e07d597392427396be20f2909f5",
+    "semantic_hash": ""
+  },
+  "public/banks/emlakkatilim.svg": {
+    "mtime": 1791320903.6290784,
+    "seen": 1791321202.6252732,
+    "ast_hash": "32f9701bcea22102053d89f64f4a9a1c",
+    "semantic_hash": ""
+  },
+  "public/banks/fibabanka.svg": {
+    "mtime": 1791320903.8252923,
+    "seen": 1791321202.6252747,
+    "ast_hash": "25c39b4e2e3351e7fb5dc4744d90f355",
+    "semantic_hash": ""
+  },
+  "public/banks/freedombank.svg": {
+    "mtime": 1791320904.4072473,
+    "seen": 1791321202.6252759,
+    "ast_hash": "905d1fbbff7164ddc58d7bc01159069e",
+    "semantic_hash": ""
+  },
+  "public/banks/garanti.svg": {
+    "mtime": 1791320904.5305169,
+    "seen": 1791321202.6252778,
+    "ast_hash": "df69d99ec871e26ffedf9d62869211b7",
+    "semantic_hash": ""
+  },
+  "public/banks/goldenglobal.svg": {
+    "mtime": 1791320905.4708662,
+    "seen": 1791321202.6252794,
+    "ast_hash": "deb97c2328fbee22dd38444e78a956f1",
+    "semantic_hash": ""
+  },
+  "public/banks/halkbank.svg": {
+    "mtime": 1791320905.582937,
+    "seen": 1791321202.625281,
+    "ast_hash": "426d6fc042e59e4e7a0ae00c3071eea9",
+    "semantic_hash": ""
+  },
+  "public/banks/hayatfinans.svg": {
+    "mtime": 1791320905.9629147,
+    "seen": 1791321202.6252825,
+    "ast_hash": "65a2365b3d254cd24f79d429b2c1dd84",
+    "semantic_hash": ""
+  },
+  "public/banks/hsbc.svg": {
+    "mtime": 1791320906.0800464,
+    "seen": 1791321202.6252842,
+    "ast_hash": "e3b214493de028de608bef4f1d05b2fa",
+    "semantic_hash": ""
+  },
+  "public/banks/icbc.svg": {
+    "mtime": 1791320906.564787,
+    "seen": 1791321202.6252863,
+    "ast_hash": "dd054f84871ebf8eb752ed500240de8b",
+    "semantic_hash": ""
+  },
+  "public/banks/ing.svg": {
+    "mtime": 1791320906.662824,
+    "seen": 1791321202.6252878,
+    "ast_hash": "65af592609b03a7a9cb2a44fce408c0a",
+    "semantic_hash": ""
+  },
+  "public/banks/isbank.svg": {
+    "mtime": 1791320906.7784116,
+    "seen": 1791321202.6252904,
+    "ast_hash": "09307f0418298371872384f13def623f",
+    "semantic_hash": ""
+  },
+  "public/banks/kuveytturk.svg": {
+    "mtime": 1791320906.8871317,
+    "seen": 1791321202.6252925,
+    "ast_hash": "8638544cb002baec48bf7116c1e4b793",
+    "semantic_hash": ""
+  },
+  "public/banks/nkolay.svg": {
+    "mtime": 1791320908.3219874,
+    "seen": 1791321202.6252937,
+    "ast_hash": "4f39d6e499e073fe9f88b4541c04355e",
+    "semantic_hash": ""
+  },
+  "public/banks/odeabank.svg": {
+    "mtime": 1791320908.8138473,
+    "seen": 1791321202.6252954,
+    "ast_hash": "3b84d45bc932aca83015fac51ed0f616",
+    "semantic_hash": ""
+  },
+  "public/banks/qnb.svg": {
+    "mtime": 1791320908.923498,
+    "seen": 1791321202.6252968,
+    "ast_hash": "fc32eff2a64a86c6b820e09c41678667",
+    "semantic_hash": ""
+  },
+  "public/banks/sekerbank.svg": {
+    "mtime": 1791320909.0340278,
+    "seen": 1791321202.6252985,
+    "ast_hash": "bc2075ee391180262b9a1fbf53685751",
+    "semantic_hash": ""
+  },
+  "public/banks/teb.svg": {
+    "mtime": 1791320909.1378663,
+    "seen": 1791321202.6253,
+    "ast_hash": "ad2c90b5f1fd1e90f80a60e564bea100",
+    "semantic_hash": ""
+  },
+  "public/banks/terabank.svg": {
+    "mtime": 1791320909.494963,
+    "seen": 1791321202.6253014,
+    "ast_hash": "cec13e78561ea057401396f83d05d3fe",
+    "semantic_hash": ""
+  },
+  "public/banks/turkiyefinans.svg": {
+    "mtime": 1791320911.0209277,
+    "seen": 1791321202.6253026,
+    "ast_hash": "712b334e9cc18caf70241bbf8a8b36d9",
+    "semantic_hash": ""
+  },
+  "public/banks/vakifbank.svg": {
+    "mtime": 1791320911.1394517,
+    "seen": 1791321202.625304,
+    "ast_hash": "e45c3f4bc3d9240b7f15715ab6569231",
+    "semantic_hash": ""
+  },
+  "public/banks/vakifkatilim.svg": {
+    "mtime": 1791320911.841958,
+    "seen": 1791321202.6253057,
+    "ast_hash": "5dc0df616a0fdc9b5800907db4fd060b",
+    "semantic_hash": ""
+  },
+  "public/banks/yapikredi.svg": {
+    "mtime": 1791320911.9654577,
+    "seen": 1791321202.6253068,
+    "ast_hash": "2614c30571951be90ffea198c6d3aceb",
+    "semantic_hash": ""
+  },
+  "public/banks/ziraat.svg": {
+    "mtime": 1791320912.081654,
+    "seen": 1791321202.6253085,
+    "ast_hash": "06e5973010d95cbf05323b5b6d2fc24f",
+    "semantic_hash": ""
+  },
+  "public/banks/ziraatkatilim.svg": {
+    "mtime": 1791320913.520888,
+    "seen": 1791321202.62531,
+    "ast_hash": "a7c40c098fc7cb8ee9da281ad7b5c1ff",
     "semantic_hash": ""
   }
 }
