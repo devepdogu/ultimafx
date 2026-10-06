@@ -1,0 +1,998 @@
+// Ultima — Turkish real-time investment platform
+// Database schema (Phase 1: architecture + models, no live data wiring yet)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =========================================================================
+// ENUMS
+// =========================================================================
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  CLOSED
+}
+
+enum AssetType {
+  STOCK
+  /// US-listed equities (Nasdaq/NYSE) — distinct from STOCK (BIST) because the
+  /// Yahoo Finance adapter needs a different symbol format (no ".IS" suffix)
+  /// and a different trading-session clock.
+  US_STOCK
+  INDEX
+  FUND
+  CURRENCY
+  COMMODITY
+  CRYPTO
+  INTEREST_PRODUCT
+  CUSTOM
+}
+
+enum AssetVisibility {
+  PUBLIC
+  HIDDEN
+}
+
+enum MarketStatus {
+  OPEN
+  CLOSED
+  PRE_MARKET
+  OPENING_AUCTION
+  CLOSING_AUCTION
+  HALTED
+  HOLIDAY
+}
+
+// Every quote/value shown to a user must carry one of these. The UI is
+// required to render this state and must never present DELAYED, CACHED or
+// MANUAL_OVERRIDE data as if it were LIVE.
+enum DataProvenance {
+  LIVE
+  DELAYED
+  MANUAL_OVERRIDE
+  CACHED
+  UNAVAILABLE
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+}
+
+enum OrderStatus {
+  PENDING
+  OPEN
+  PARTIALLY_FILLED
+  FILLED
+  CANCELLED
+  REJECTED
+  EXPIRED
+}
+
+enum AlertCondition {
+  PRICE_ABOVE
+  PRICE_BELOW
+  PERCENT_CHANGE
+  DAILY_HIGH
+  DAILY_LOW
+  CUSTOM
+}
+
+enum NotificationChannel {
+  PUSH
+  IN_APP
+  EMAIL
+}
+
+enum NewsCategory {
+  BORSA
+  EKONOMI
+  SIRKET_HABERLERI
+  DUNYA
+  DOVIZ
+  ALTIN
+  KRIPTO
+  EMTIA
+  MERKEZ_BANKALARI
+  HALKA_ARZ
+  SERMAYE_ARTIRIMI
+  TEMETTU
+  KAP
+}
+
+enum IPOStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum DividendStatus {
+  ANNOUNCED
+  PAYING
+  PAID
+}
+
+enum CorporateActionType {
+  TEMETTU
+  BEDELLI_SERMAYE_ARTIRIMI
+  BEDELSIZ_SERMAYE_ARTIRIMI
+  RUCHAN_HAKKI
+  BOLUNME
+  BIRLESME
+  PAY_GERI_ALIMI
+  DELISTING
+  LISTING
+  OTHER
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  ADJUSTMENT
+  FEE
+  REFUND
+  TRANSFER
+  /// Internal buy settlement — debits cash when a simulated trade executes.
+  TRADE_BUY
+  /// Internal sell settlement — credits cash when a simulated trade executes.
+  TRADE_SELL
+}
+
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProviderType {
+  BORSA_ISTANBUL
+  FOREKS
+  KAP
+  TCMB
+  CRYPTO
+  NEWS
+  CUSTOM
+}
+
+enum ProviderEnvironment {
+  PRODUCTION
+  SANDBOX
+}
+
+enum DataConnectionMode {
+  REALTIME
+  DELAYED
+}
+
+enum ProviderHealthStatus {
+  HEALTHY
+  DELAYED
+  DEGRADED
+  OFFLINE
+}
+
+enum CalendarEventType {
+  TRADING_SESSION
+  HOLIDAY
+  IPO
+  DIVIDEND
+  CORPORATE_ACTION
+  CENTRAL_BANK
+  ECONOMIC_DATA
+}
+
+enum InterestProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BankAccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// =========================================================================
+// AUTH / RBAC
+// =========================================================================
+
+model User {
+  id            String     @id @default(cuid())
+  email         String?    @unique
+  emailVerified DateTime?
+  phone         String?    @unique
+  tcKimlikHash  String?    @unique
+  termsAcceptedAt DateTime?
+  kvkkAcceptedAt  DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  locale        String     @default("tr")
+  referralCode  String?    @unique
+  referredById  String?
+  status        UserStatus @default(PENDING_VERIFICATION)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  roles    UserRole[]
+  accounts Account[]
+  sessions Session[]
+
+  portfolio            Portfolio?
+  wallet               Wallet?
+  watchlists           Watchlist[]
+  priceAlerts          PriceAlert[]
+  orders               Order[]
+  trades               Trade[]
+  notifications        Notification[]
+  deposits             Deposit[]
+  withdrawals          Withdrawal[]
+  auditLogs            AuditLog[]     @relation("AuditLogActor")
+  processedDeposits    Deposit[]      @relation("DepositProcessedBy")
+  processedWithdrawals Withdrawal[]   @relation("WithdrawalProcessedBy")
+
+  @@index([status])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. SUPER_ADMIN, ADMIN, SUPPORT, USER
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g. "asset:write", "price:override"
+  description String?
+
+  roles RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+// NextAuth (Auth.js) adapter models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =========================================================================
+// MARKET STRUCTURE
+// =========================================================================
+
+model Exchange {
+  id        String   @id @default(cuid())
+  code      String   @unique // e.g. "BIST"
+  name      String
+  country   String
+  timezone  String
+  createdAt DateTime @default(now())
+
+  markets  Market[]
+  assets   Asset[]
+  calendar MarketCalendar[]
+}
+
+model Market {
+  id          String   @id @default(cuid())
+  exchangeId  String
+  code        String // e.g. "BIST100", "BIST30", "BIST-PAY"
+  name        String
+  type        String // EQUITY, INDEX, FUND, DERIVATIVE, PARTICIPATION ...
+  description String?
+  createdAt   DateTime @default(now())
+
+  exchange Exchange @relation(fields: [exchangeId], references: [id])
+  assets   Asset[]
+  indices  Index[]
+
+  @@unique([exchangeId, code])
+}
+
+model Sector {
+  id     String  @id @default(cuid())
+  code   String  @unique
+  name   String
+  assets Asset[]
+}
+
+// A BIST/benchmark index as a trackable entity (BIST 100, BIST 30, sector
+// indices, ...). Distinct from Asset so index membership can be many-to-many.
+model Index {
+  id           String             @id @default(cuid())
+  code         String             @unique // e.g. "XU100", "XU030"
+  name         String
+  marketId     String?
+  market       Market?            @relation(fields: [marketId], references: [id])
+  constituents IndexConstituent[]
+  createdAt    DateTime           @default(now())
+}
+
+model IndexConstituent {
+  indexId String
+  assetId String
+  weight  Decimal? @db.Decimal(10, 6)
+
+  index Index @relation(fields: [indexId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([indexId, assetId])
+}
+
+// =========================================================================
+// ASSETS & QUOTES
+// =========================================================================
+
+model Asset {
+  id          String    @id @default(cuid())
+  symbol      String    @unique
+  name        String
+  type        AssetType
+  currency    String    @default("TRY")
+  logoUrl     String?
+  description String?
+
+  exchangeId String?
+  exchange   Exchange? @relation(fields: [exchangeId], references: [id])
+  marketId   String?
+  market     Market?   @relation(fields: [marketId], references: [id])
+  sectorId   String?
+  sector     Sector?   @relation(fields: [sectorId], references: [id])
+
+  decimalPrecision Int             @default(2)
+  isActive         Boolean         @default(true)
+  isCustom         Boolean         @default(false)
+  visibility       AssetVisibility @default(PUBLIC)
+  tradingEnabled   Boolean         @default(false)
+
+  // Manual override — only ever surfaced to users via DataProvenance.MANUAL_OVERRIDE,
+  // never silently merged into "live" fields. See section 25/26 of the product spec.
+  manualOverrideEnabled Boolean  @default(false)
+  manualPrice           Decimal? @db.Decimal(20, 6)
+  manualChange          Decimal? @db.Decimal(20, 6)
+  manualChangePercent   Decimal? @db.Decimal(10, 4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  indexMemberships IndexConstituent[]
+  fund             Fund?
+  dividends        Dividend[]
+  corporateActions CorporateAction[]
+  kapDisclosures   KAPDisclosure[]
+  ipo              IPO?
+  holdings         Holding[]
+  watchlistItems   WatchlistItem[]
+  priceAlerts      PriceAlert[]
+  orders           Order[]
+  trades           Trade[]
+  newsArticles     NewsArticleAsset[]
+  calendarEvents   MarketCalendar[]
+
+  @@index([type])
+  @@index([marketId])
+  @@index([sectorId])
+}
+
+// NOTE: there is intentionally no Quote or PriceHistory model here. Current
+// prices and historical chart data are NOT stored in Postgres — they are
+// fetched live from a MarketDataProvider and cached in Redis (short TTL for
+// quotes, cache-aside for historical ranges). Postgres holds only data this
+// application owns (ledger, orders, trades, holdings, curated content), not
+// a continuously-growing copy of external market data. See
+// src/lib/market-data/cached-provider.ts.
+
+model Fund {
+  id                String   @id @default(cuid())
+  assetId           String   @unique
+  asset             Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  code              String   @unique
+  managementCompany String
+  fundType          String
+  riskLevel         String?
+  assetAllocation   Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// =========================================================================
+// TRADING / PORTFOLIO
+// =========================================================================
+
+model Order {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  side            OrderSide
+  type            OrderType
+  quantity        Decimal   @db.Decimal(24, 6)
+  limitPrice      Decimal?  @db.Decimal(20, 6)
+  estimatedAmount Decimal?  @db.Decimal(24, 6)
+  commission      Decimal?  @db.Decimal(20, 6)
+  validity        String    @default("DAY")
+
+  status           OrderStatus @default(PENDING)
+  filledQuantity   Decimal     @default(0) @db.Decimal(24, 6)
+  averageFillPrice Decimal?    @db.Decimal(20, 6)
+
+  // The reference price/provenance in effect when the order was placed or
+  // (for limit orders) last evaluated by the matching job. This order is
+  // ALWAYS executed internally against the app's own ledger — it is never
+  // routed to a real exchange or broker.
+  referencePrice           Decimal?        @db.Decimal(20, 6)
+  referencePriceProvenance DataProvenance?
+  rejectionReason          String?
+
+  placedAt    DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cancelledAt DateTime?
+
+  trades Trade[]
+
+  @@index([userId, status])
+  @@index([assetId])
+}
+
+model Trade {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  side            OrderSide
+  quantity        Decimal        @db.Decimal(24, 6)
+  price           Decimal        @db.Decimal(20, 6)
+  commission      Decimal        @default(0) @db.Decimal(20, 6)
+  /// Provenance of the reference price this internal trade executed against.
+  priceProvenance DataProvenance
+  executedAt      DateTime       @default(now())
+
+  @@index([userId])
+  @@index([assetId])
+}
+
+model Portfolio {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalValue Decimal  @default(0) @db.Decimal(24, 6)
+  dailyPnl   Decimal  @default(0) @db.Decimal(24, 6)
+  totalPnl   Decimal  @default(0) @db.Decimal(24, 6)
+  updatedAt  DateTime @updatedAt
+
+  holdings Holding[]
+}
+
+model Holding {
+  id          String    @id @default(cuid())
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       Asset     @relation(fields: [assetId], references: [id])
+
+  quantity    Decimal  @db.Decimal(24, 6)
+  averageCost Decimal  @db.Decimal(20, 6)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([portfolioId, assetId])
+}
+
+model Wallet {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cashBalance    Decimal  @default(0) @db.Decimal(24, 6)
+  pendingBalance Decimal  @default(0) @db.Decimal(24, 6)
+  currency       String   @default("TRY")
+  updatedAt      DateTime @updatedAt
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  type          WalletTransactionType
+  amount        Decimal               @db.Decimal(24, 6)
+  balanceAfter  Decimal               @db.Decimal(24, 6)
+  referenceType String?
+  referenceId   String?
+  description   String?
+  createdAt     DateTime              @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+// =========================================================================
+// WATCHLISTS / ALERTS
+// =========================================================================
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items WatchlistItem[]
+
+  @@index([userId])
+}
+
+model WatchlistItem {
+  id          String    @id @default(cuid())
+  watchlistId String
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       Asset     @relation(fields: [assetId], references: [id])
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@unique([watchlistId, assetId])
+}
+
+model PriceAlert {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  condition   AlertCondition
+  targetValue Decimal?              @db.Decimal(20, 6)
+  channels    NotificationChannel[]
+  isActive    Boolean               @default(true)
+  isTriggered Boolean               @default(false)
+  triggeredAt DateTime?
+  createdAt   DateTime              @default(now())
+
+  @@index([userId])
+  @@index([assetId, isActive])
+}
+
+// =========================================================================
+// NEWS / KAP / IPO / CORPORATE ACTIONS
+// =========================================================================
+
+model NewsSource {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  url        String?
+  isLicensed Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  articles NewsArticle[]
+}
+
+model NewsArticle {
+  id       String     @id @default(cuid())
+  sourceId String
+  source   NewsSource @relation(fields: [sourceId], references: [id])
+
+  title       String
+  summary     String?
+  imageUrl    String?
+  category    NewsCategory
+  publishedAt DateTime
+  updatedAt   DateTime     @updatedAt
+  originalUrl String
+
+  isApproved Boolean @default(false)
+  isFeatured Boolean @default(false)
+  isHidden   Boolean @default(false)
+
+  relatedAssets NewsArticleAsset[]
+
+  @@index([category, publishedAt])
+  @@index([isApproved, isHidden])
+}
+
+model NewsArticleAsset {
+  newsArticleId String
+  assetId       String
+  newsArticle   NewsArticle @relation(fields: [newsArticleId], references: [id], onDelete: Cascade)
+  asset         Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([newsArticleId, assetId])
+}
+
+model KAPDisclosure {
+  id      String  @id @default(cuid())
+  assetId String?
+  asset   Asset?  @relation(fields: [assetId], references: [id])
+
+  companyName    String
+  symbol         String?
+  title          String
+  category       String
+  disclosureDate DateTime
+  originalUrl    String
+  rawPayload     Json?
+  createdAt      DateTime @default(now())
+
+  @@index([disclosureDate])
+  @@index([symbol])
+}
+
+model IPO {
+  id      String  @id @default(cuid())
+  assetId String? @unique
+  asset   Asset?  @relation(fields: [assetId], references: [id])
+
+  companyName           String
+  code                  String    @unique
+  ipoPriceMin           Decimal?  @db.Decimal(20, 6)
+  ipoPriceMax           Decimal?  @db.Decimal(20, 6)
+  demandCollectionStart DateTime?
+  demandCollectionEnd   DateTime?
+  allocationMethod      String?
+  totalOfferingSize     Decimal?  @db.Decimal(24, 6)
+  numberOfShares        Decimal?  @db.Decimal(24, 6)
+  market                String?
+  expectedListingDate   DateTime?
+  status                IPOStatus @default(UPCOMING)
+  officialSourceUrl     String?
+  documents             Json?
+
+  isPublished Boolean @default(false)
+  isFeatured  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Dividend {
+  id      String @id @default(cuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  amountPerShare Decimal        @db.Decimal(20, 6)
+  dividendYield  Decimal?       @db.Decimal(10, 4)
+  exDate         DateTime?
+  recordDate     DateTime?
+  paymentDate    DateTime?
+  status         DividendStatus @default(ANNOUNCED)
+  createdAt      DateTime       @default(now())
+
+  @@index([assetId])
+  @@index([exDate])
+}
+
+model CorporateAction {
+  id      String @id @default(cuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  type             CorporateActionType
+  announcementDate DateTime?
+  recordDate       DateTime?
+  exDate           DateTime?
+  paymentDate      DateTime?
+  ratio            Decimal?            @db.Decimal(10, 6)
+  amount           Decimal?            @db.Decimal(20, 6)
+  description      String?
+  sourceUrl        String?
+  createdAt        DateTime            @default(now())
+
+  @@index([assetId, type])
+}
+
+// =========================================================================
+// INTEREST / YIELD PRODUCTS (internal, not a regulated bank deposit)
+// =========================================================================
+
+model InterestProduct {
+  id           String                @id @default(cuid())
+  name         String
+  rate         Decimal               @db.Decimal(10, 4)
+  durationDays Int
+  currency     String                @default("TRY")
+  minAmount    Decimal               @db.Decimal(24, 6)
+  maxAmount    Decimal               @db.Decimal(24, 6)
+  startDate    DateTime
+  endDate      DateTime
+  description  String?
+  status       InterestProductStatus @default(ACTIVE)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
+
+// =========================================================================
+// WALLET / BANKING OPERATIONS
+// =========================================================================
+
+model BankAccount {
+  id            String            @id @default(cuid())
+  bankName      String
+  branch        String?
+  iban          String
+  accountHolder String
+  currency      String            @default("TRY")
+  instructions  String?
+  status        BankAccountStatus @default(ACTIVE)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  deposits Deposit[]
+}
+
+model Deposit {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+
+  amount    Decimal       @db.Decimal(24, 6)
+  currency  String        @default("TRY")
+  status    DepositStatus @default(PENDING)
+  reference String?
+  proofUrl  String?
+
+  requestedAt        DateTime  @default(now())
+  processedAt        DateTime?
+  processedByAdminId String?
+  processedByAdmin   User?     @relation("DepositProcessedBy", fields: [processedByAdminId], references: [id])
+  rejectionReason    String?
+  adminNote          String?
+
+  @@index([userId, status])
+}
+
+model Withdrawal {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  amount                   Decimal          @db.Decimal(24, 6)
+  currency                 String           @default("TRY")
+  destinationIban          String
+  destinationBankName      String
+  destinationAccountHolder String
+  status                   WithdrawalStatus @default(PENDING)
+
+  requestedAt        DateTime  @default(now())
+  processedAt        DateTime?
+  processedByAdminId String?
+  processedByAdmin   User?     @relation("WithdrawalProcessedBy", fields: [processedByAdminId], references: [id])
+  rejectionReason    String?
+  adminNote          String?
+
+  @@index([userId, status])
+}
+
+// =========================================================================
+// DATA PROVIDER MANAGEMENT
+// =========================================================================
+
+model DataProvider {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  type               ProviderType
+  apiUrl             String?
+  // Secrets are stored encrypted server-side and are never sent to the client.
+  apiKeyEncrypted    String?
+  apiSecretEncrypted String?
+  environment        ProviderEnvironment @default(SANDBOX)
+  mode               DataConnectionMode  @default(DELAYED)
+  isEnabled          Boolean             @default(false)
+  pollingIntervalMs  Int?
+  websocketUrl       String?
+  rateLimitPerMinute Int?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  logs DataProviderLog[]
+}
+
+model DataProviderLog {
+  id             String       @id @default(cuid())
+  dataProviderId String
+  dataProvider   DataProvider @relation(fields: [dataProviderId], references: [id], onDelete: Cascade)
+
+  status            ProviderHealthStatus
+  latencyMs         Int?
+  message           String?
+  requestsPerMinute Int?
+  occurredAt        DateTime             @default(now())
+
+  @@index([dataProviderId, occurredAt])
+}
+
+// =========================================================================
+// PLATFORM / OPERATIONS
+// =========================================================================
+
+model AuditLog {
+  id          String  @id @default(cuid())
+  adminUserId String?
+  adminUser   User?   @relation("AuditLogActor", fields: [adminUserId], references: [id])
+
+  action     String // e.g. PRICE_OVERRIDE_ENABLED, ASSET_CREATED, ...
+  entityType String?
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MarketCalendar {
+  id             String            @id @default(cuid())
+  date           DateTime
+  exchangeId     String?
+  exchange       Exchange?         @relation(fields: [exchangeId], references: [id])
+  eventType      CalendarEventType
+  title          String
+  description    String?
+  relatedAssetId String?
+  relatedAsset   Asset?            @relation(fields: [relatedAssetId], references: [id])
+  createdAt      DateTime          @default(now())
+
+  @@index([date, eventType])
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel       NotificationChannel
+  title         String
+  body          String
+  isRead        Boolean             @default(false)
+  referenceType String?
+  referenceId   String?
+  createdAt     DateTime            @default(now())
+
+  @@index([userId, isRead])
+}
+
+model SystemSetting {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  value            Json
+  description      String?
+  updatedAt        DateTime @updatedAt
+  updatedByAdminId String?
+}
+
+/// Homepage promo-carousel slides — entirely admin-authored content (title,
+/// image, optional link), never auto-generated, so the dashboard carousel
+/// only ever shows what an admin actually wrote.
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String?
+  linkUrl   String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+}
+
+
+model InvestmentFund {
+  id            String   @id @default(cuid())
+  name          String
+  companyName   String
+  category      String
+  description   String?
+  risk          Int
+  unitPrice     Decimal? @db.Decimal(18, 6)
+  currency      String   @default("TRY")
+  ytdReturn     Decimal? @db.Decimal(8, 2)
+  oneYearReturn Decimal? @db.Decimal(8, 2)
+  aum           Decimal? @db.Decimal(20, 2)
+  investorCount Int?
+  position      Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive, position])
+}
+
+model SiteSettings {
+  id        String   @id @default("default")
+  siteName  String   @default("Ultima FX")
+  logoUrl   String?
+  updatedAt DateTime @updatedAt
+}

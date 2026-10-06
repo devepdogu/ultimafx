@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ultima
 
-## Getting Started
+Turkish closed-loop investment simulation platform. Real public market data
+for reference pricing (TCMB FX today; more providers to follow); all buy/sell
+activity is internal/simulated and never reaches a real exchange or broker.
 
-First, run the development server:
+## Stack
+
+Next.js 16 (App Router) · React 19 · Prisma + PostgreSQL · Redis (cache +
+BullMQ jobs) · next-intl (tr default, en) · Auth.js (Credentials + RBAC).
+
+## Local setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up -d        # Postgres (5434) + Redis (6380)
+cp .env.example .env        # fill in secrets if you changed the defaults
+npm install
+npm run db:migrate          # applies prisma/migrations
+npm run db:seed             # roles, BIST exchange, FX assets, dev admin user
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the background worker (cache pre-warming, future sync jobs) separately:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run worker
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Architecture notes
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **No fabricated market data.** Every price carries a `DataProvenance`
+  (`LIVE` / `DELAYED` / `MANUAL_OVERRIDE` / `CACHED` / `UNAVAILABLE`) and the
+  UI renders it — see `src/lib/market-data/`.
+- **Market data lives in Redis, not Postgres.** Quotes/history are fetched
+  from a `MarketDataProvider` and cache-aside'd in Redis
+  (`src/lib/market-data/cached-provider.ts`); Postgres only holds data the
+  app owns (ledger, orders, trades, holdings, curated content).
+- **Trading is entirely internal.** `src/lib/trading/engine.ts` settles buy/
+  sell orders against the app's own `Wallet`/`Holding` ledger with
+  `Decimal`-safe math and row-level locking — it never talks to a broker.
+- **Wallet is an append-only ledger.** `WalletTransaction` rows are the
+  source of truth; `Wallet.cashBalance` is a projection, never mutated
+  without a corresponding transaction row.
