@@ -514,6 +514,62 @@ async function main() {
     });
   }
 
+  // Popular cryptocurrencies — catalog entries only. Prices come live from CoinGecko's public
+  // API (see src/lib/market-data/providers/coingecko-provider.ts); nothing here is a fabricated price.
+  // Names and logos are fetched from CoinGecko itself at seed time, not typed in by hand, so a
+  // re-run keeps them in sync; if the fetch fails (offline, rate limit) the seed still proceeds —
+  // assets are created with a readable fallback name and no logo rather than failing outright.
+  const cryptoIds = [
+    "bitcoin", "ethereum", "tether", "binancecoin", "solana", "ripple", "usd-coin", "dogecoin",
+    "cardano", "tron", "the-open-network", "avalanche-2", "shiba-inu", "polkadot", "chainlink",
+    "matic-network", "litecoin", "bitcoin-cash", "internet-computer", "uniswap", "ethereum-classic",
+    "stellar", "cosmos", "filecoin", "aptos", "near", "optimism", "arbitrum", "vechain",
+    "hedera-hashgraph", "sui", "pepe", "injective-protocol", "aave", "maker",
+  ];
+  let cryptoLogos = new Map<string, { name: string; symbol: string; image: string }>();
+  try {
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=try&ids=${cryptoIds.join(",")}&per_page=${cryptoIds.length}`,
+      { signal: AbortSignal.timeout(15_000) }
+    );
+    if (res.ok) {
+      const rows: { id: string; name: string; symbol: string; image: string }[] = await res.json();
+      cryptoLogos = new Map(rows.map((r) => [r.id, { name: r.name, symbol: r.symbol.toUpperCase(), image: r.image }]));
+    }
+  } catch {
+    // Offline or rate-limited — fall through and seed without live names/logos this run.
+  }
+  // CoinGecko's own `symbol` field is occasionally a legacy/renamed ticker that no longer matches
+  // the coin's actual trading symbol on Binance (our price source) — e.g. it still reports "GRAM"
+  // for The Open Network, which is a *different*, unrelated listing on Binance. Known mismatches
+  // are corrected here so we never price or trade the wrong asset under the right-looking name.
+  const SYMBOL_OVERRIDES: Record<string, string> = { "the-open-network": "TON" };
+  // Same idea for the display name: CoinGecko's own `name` for this id is the confusing
+  // "Gram (prev. Toncoin)" — the ticker/price are for the real, current TON, just labelled oddly.
+  const NAME_OVERRIDES: Record<string, string> = { "the-open-network": "Toncoin" };
+  for (const id of cryptoIds) {
+    const meta = cryptoLogos.get(id);
+    const symbol = SYMBOL_OVERRIDES[id] ?? meta?.symbol ?? id.slice(0, 10).toUpperCase();
+    const name = NAME_OVERRIDES[id] ?? meta?.name ?? id;
+    await prisma.asset.upsert({
+      where: { symbol },
+      update: { coingeckoId: id, ...(meta ? { name, logoUrl: meta.image } : {}) },
+      create: {
+        symbol,
+        name,
+        logoUrl: meta?.image ?? null,
+        type: "CRYPTO",
+        currency: "TRY",
+        coingeckoId: id,
+        decimalPrecision: 2,
+        isActive: true,
+        tradingEnabled: true,
+        visibility: "PUBLIC",
+      },
+    });
+  }
+  console.log(`Seeded ${cryptoIds.length} crypto assets${cryptoLogos.size > 0 ? " with live names/logos" : " (CoinGecko unreachable — names/logos not updated this run)"}.`);
+
   // TRY term deposit products. Existing rows are left untouched; only missing terms are created,
   // so admin-edited rates survive re-running the seed. Rates for new terms are placeholders to review in /admin.
   // Term deposit products per currency. Existing rows are left untouched; only missing

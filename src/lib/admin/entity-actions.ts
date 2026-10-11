@@ -41,7 +41,28 @@ const assetSchema = z.object({
   currency: z.string().trim().length(3, "Para birimi üç harf olmalı."),
   logoUrl: optionalUrl,
   tradingEnabled: z.boolean(),
+  coingeckoId: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(60)
+    .transform((v) => v || null),
 });
+
+/** Real logo from CoinGecko for a coin id, or null if the lookup fails — never a guessed/fabricated URL. */
+async function fetchCoinGeckoLogo(coingeckoId: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${coingeckoId}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false`,
+      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) }
+    );
+    if (!res.ok) return null;
+    const json: { image?: { large?: string; small?: string; thumb?: string } } = await res.json();
+    return json.image?.large ?? json.image?.small ?? json.image?.thumb ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function saveAssetAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
   const admin = await requireAdmin();
@@ -52,15 +73,23 @@ export async function saveAssetAction(_prev: AdminActionResult, formData: FormDa
     currency: String(formData.get("currency") ?? "").toUpperCase(),
     logoUrl: formData.get("logoUrl") ?? "",
     tradingEnabled: formData.get("tradingEnabled") === "on",
+    coingeckoId: formData.get("coingeckoId") ?? "",
   });
   if (!parsed.success) return fail(parsed.error.issues[0], "Geçersiz alanlar.");
+  // Only CRYPTO assets use a CoinGecko id; keep it null for everything else so stale values never linger.
+  const data = { ...parsed.data, coingeckoId: parsed.data.type === "CRYPTO" ? parsed.data.coingeckoId : null };
+  // No logo was uploaded by hand: for a crypto with a known coin id, pull the real logo from CoinGecko
+  // itself rather than leaving the asset without one or inventing a placeholder.
+  if (data.type === "CRYPTO" && data.coingeckoId && !data.logoUrl) {
+    data.logoUrl = await fetchCoinGeckoLogo(data.coingeckoId);
+  }
 
   if (id) {
     const before = await prisma.asset.findUnique({ where: { id } });
     if (!before) return { error: "Varlık bulunamadı." };
     // The symbol is the price-feed key and is fixed after creation.
-    await prisma.asset.update({ where: { id }, data: parsed.data });
-    await writeAuditLog({ adminUserId: admin.id, action: "ASSET_UPDATED", entityType: "Asset", entityId: id, oldValue: { name: before.name }, newValue: { name: parsed.data.name } });
+    await prisma.asset.update({ where: { id }, data });
+    await writeAuditLog({ adminUserId: admin.id, action: "ASSET_UPDATED", entityType: "Asset", entityId: id, oldValue: { name: before.name }, newValue: { name: data.name } });
     revalidatePath("/piyasalar");
     return { success: "Varlık güncellendi." };
   }
@@ -68,7 +97,7 @@ export async function saveAssetAction(_prev: AdminActionResult, formData: FormDa
   const symbol = String(formData.get("symbol") ?? "").trim().toUpperCase();
   if (!/^[A-Z0-9.\-=^]{1,20}$/.test(symbol)) return { error: "Sembol 1-20 karakter olmalı (harf, rakam, nokta)." };
   if (await prisma.asset.findUnique({ where: { symbol } })) return { error: "Bu sembol zaten kayıtlı." };
-  const created = await prisma.asset.create({ data: { ...parsed.data, symbol, decimalPrecision: 2, isActive: true, visibility: "PUBLIC" } });
+  const created = await prisma.asset.create({ data: { ...data, symbol, decimalPrecision: 2, isActive: true, visibility: "PUBLIC" } });
   await writeAuditLog({ adminUserId: admin.id, action: "ASSET_CREATED", entityType: "Asset", entityId: created.id, newValue: { symbol } });
   revalidatePath("/piyasalar");
   return { success: `${symbol} eklendi.` };

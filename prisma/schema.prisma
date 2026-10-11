@@ -446,6 +446,10 @@ model Asset {
   visibility       AssetVisibility @default(PUBLIC)
   tradingEnabled   Boolean         @default(false)
 
+  /// CoinGecko coin id (e.g. "bitcoin"), used only for type = CRYPTO to fetch a real price.
+  /// Null falls back to a built-in ticker map in the crypto provider; still null means no live price.
+  coingeckoId String?
+
   // Manual override — only ever surfaced to users via DataProvenance.MANUAL_OVERRIDE,
   // never silently merged into "live" fields. See section 25/26 of the product spec.
   manualOverrideEnabled Boolean  @default(false)

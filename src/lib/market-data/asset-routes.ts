@@ -6,6 +6,7 @@ const BASE_PATHS: Partial<Record<AssetType, string>> = {
   INDEX: "/piyasalar/borsa",
   STOCK: "/piyasalar/borsa",
   US_STOCK: "/piyasalar/nasdaq",
+  CRYPTO: "/piyasalar/kripto",
 };
 
 /** Returns the detail-route base path for an asset type, or null if no route exists yet for it. */

@@ -20,7 +20,28 @@ export interface AssetValues {
   currency: string;
   logoUrl: string | null;
   tradingEnabled: boolean;
+  coingeckoId: string | null;
 }
+
+/** Common ticker → CoinGecko id, shown as a hint; the admin can still type any other coin's id. */
+const COMMON_COINGECKO_IDS: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  USDT: "tether",
+  BNB: "binancecoin",
+  SOL: "solana",
+  XRP: "ripple",
+  DOGE: "dogecoin",
+  ADA: "cardano",
+  TRX: "tron",
+  TON: "the-open-network",
+  AVAX: "avalanche-2",
+  DOT: "polkadot",
+  LINK: "chainlink",
+  MATIC: "matic-network",
+  LTC: "litecoin",
+  SHIB: "shiba-inu",
+};
 
 const ASSET_TYPES = [
   { value: "US_STOCK", label: "Nasdaq / ABD hisse" },
@@ -33,22 +54,36 @@ const ASSET_TYPES = [
 ];
 
 export function AssetEditor({ asset }: { asset?: AssetValues }) {
+  const [type, setType] = useState(asset?.type ?? "CRYPTO");
+  const [symbol, setSymbol] = useState(asset?.symbol ?? "");
+  const isCrypto = type === "CRYPTO";
+  const guessedId = COMMON_COINGECKO_IDS[symbol.trim().toUpperCase()];
+
   return (
     <AdminActionForm action={saveAssetAction} submitLabel={asset ? "Değişiklikleri kaydet" : "Varlığı ekle"}>
       {asset?.id && <input type="hidden" name="id" value={asset.id} />}
       <div className="grid gap-4 md:grid-cols-2">
-        <AdminField label="Sembol" hint={asset ? "Fiyat kaynağı anahtarıdır, sonradan değiştirilemez." : "Büyük harf. Örnek: AAPL, THYAO, USDTRY"}>
+        <AdminField
+          label="Sembol"
+          hint={
+            asset
+              ? "Fiyat kaynağı anahtarıdır, sonradan değiştirilemez."
+              : isCrypto
+                ? 'Binance\'ta işlem gören ticker, örn. "BTC", "ETH", "PEPE". Binance\'ta karşılığı (SEMBOL/USDT) yoksa fiyat gelmez.'
+                : "Büyük harf. Örnek: AAPL, THYAO"
+          }
+        >
           {asset ? (
             <input value={asset.symbol} disabled readOnly className={ADMIN_INPUT} />
           ) : (
-            <input name="symbol" required className={ADMIN_INPUT} />
+            <input name="symbol" required value={symbol} onChange={(e) => setSymbol(e.target.value)} className={ADMIN_INPUT} />
           )}
         </AdminField>
         <AdminField label="Varlık adı">
           <input name="name" required defaultValue={asset?.name} className={ADMIN_INPUT} />
         </AdminField>
         <AdminField label="Tür" hint="Piyasa saatleri ve fiyat kaynağı türe göre belirlenir.">
-          <select name="type" required defaultValue={asset?.type ?? "US_STOCK"} className={ADMIN_INPUT}>
+          <select name="type" required value={type} onChange={(e) => setType(e.target.value)} className={ADMIN_INPUT}>
             {ASSET_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
@@ -56,10 +91,28 @@ export function AssetEditor({ asset }: { asset?: AssetValues }) {
             ))}
           </select>
         </AdminField>
-        <AdminField label="Para birimi" hint="Üç harf. Örnek: USD, TRY">
-          <input name="currency" required maxLength={3} defaultValue={asset?.currency ?? "USD"} className={ADMIN_INPUT} />
+        <AdminField label="Para birimi" hint="Üç harf. Kripto genelde TRY'den alınıp satılır.">
+          <input name="currency" required maxLength={3} defaultValue={asset?.currency ?? (isCrypto ? "TRY" : "USD")} className={ADMIN_INPUT} />
         </AdminField>
-        <ImageField name="logoUrl" label="Logo" defaultValue={asset?.logoUrl} hint="İsteğe bağlı. Kare bir görsel en iyi sonucu verir." />
+        {isCrypto && (
+          <AdminField
+            label="CoinGecko coin id (yalnızca logo için)"
+            hint={
+              guessedId && !asset
+                ? `Bu sembol için önerilen: "${guessedId}". Boş bırakırsanız otomatik kullanılır; fiyatı etkilemez, yalnızca logoyu CoinGecko'dan otomatik çeker.`
+                : 'Fiyatı etkilemez — yalnızca kaydederken CoinGecko\'dan logo çekmek için kullanılır. coingecko.com üzerinde coinin sayfa adresindeki son parça, örn. "bitcoin", "ripple". Boş bırakılabilir.'
+            }
+            className="md:col-span-2"
+          >
+            <input name="coingeckoId" placeholder={guessedId ?? "örn. bitcoin"} defaultValue={asset?.coingeckoId ?? ""} className={ADMIN_INPUT} />
+          </AdminField>
+        )}
+        <ImageField
+          name="logoUrl"
+          label="Logo"
+          defaultValue={asset?.logoUrl}
+          hint={isCrypto ? "İsteğe bağlı. Boş bırakılırsa CoinGecko coin id'sinden otomatik çekilir." : "İsteğe bağlı. Kare bir görsel en iyi sonucu verir."}
+        />
         <label className="flex items-center gap-3 text-[13px] font-bold">
           <input type="checkbox" name="tradingEnabled" defaultChecked={asset?.tradingEnabled ?? false} className="h-4 w-4 accent-brand" />
           Sanal işleme açık

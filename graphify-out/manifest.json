@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
-    "mtime": 1791317995.079151,
-    "seen": 1791318041.1798427,
-    "ast_hash": "6a63e9300f430b37649f03de41288865",
+    "mtime": 1791754657.1797972,
+    "seen": 1791754751.363619,
+    "ast_hash": "91b15030e7c3db7402bec17af7cabe41",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/cuzdan/page.tsx": {
@@ -132,9 +132,9 @@
     "semantic_hash": "64821e52b570f7d1f6f4af0c9978979c"
   },
   "src/app/[locale]/(app)/piyasalar/page.tsx": {
-    "mtime": 1791237607.960773,
-    "seen": 1791237847.7402668,
-    "ast_hash": "b44a6f4cb540ccf03c4516c37f4eb1bb",
+    "mtime": 1791634059.929095,
+    "seen": 1791754751.3690376,
+    "ast_hash": "bdbdeb1e47ef87031b7faa854c0b2b45",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/portfoy/page.tsx": {
@@ -294,9 +294,9 @@
     "semantic_hash": "9477515859bcb0003327635e12de9c47"
   },
   "src/components/market/MarketsExplorer.tsx": {
-    "mtime": 1791305088.2168832,
-    "seen": 1791305369.275435,
-    "ast_hash": "3ba673abd96213c777c841eaff851a6f",
+    "mtime": 1791634052.1628733,
+    "seen": 1791754751.3835087,
+    "ast_hash": "b699cb79a73c4058abec3ded626382d3",
     "semantic_hash": ""
   },
   "src/components/market/PriceChart.tsx": {
@@ -468,9 +468,9 @@
     "semantic_hash": "397ecda7924d8787476269b57257ef09"
   },
   "src/lib/market-data/asset-routes.ts": {
-    "mtime": 1791293279.5511923,
-    "seen": 1791293658.0877821,
-    "ast_hash": "547a8560b3e46fd376889615194264bc",
+    "mtime": 1791634319.5526712,
+    "seen": 1791754751.4044805,
+    "ast_hash": "685becb5d6c017bdbf278b98a83f60c3",
     "semantic_hash": ""
   },
   "src/lib/market-data/cached-provider.ts": {
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/registry.ts": {
-    "mtime": 1791307219.4515426,
-    "seen": 1791307419.8509104,
-    "ast_hash": "f5cab8fb93417bb6e54c06d3840ef8bc",
+    "mtime": 1791754195.2635665,
+    "seen": 1791754751.408937,
+    "ast_hash": "faca49ef2af2a6dccf1de93cfdd30138",
     "semantic_hash": ""
   },
   "src/lib/market-data/resolve-price.ts": {
@@ -726,9 +726,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/varliklar/page.tsx": {
-    "mtime": 1791319805.5291228,
-    "seen": 1791319938.1581125,
-    "ast_hash": "002587d3ba006dd28583258785b922b2",
+    "mtime": 1791634189.700814,
+    "seen": 1791754751.3733625,
+    "ast_hash": "849df2476ea1fad09139c4f37a90ebc8",
     "semantic_hash": ""
   },
   "src/components/admin/ContentForms.tsx": {
@@ -1625,12 +1625,6 @@
     "ast_hash": "a927f788e6e64abc96d974ff01d960a0",
     "semantic_hash": ""
   },
-  "mock/landing.html": {
-    "mtime": 1791217779.6743517,
-    "seen": 1791217975.1023164,
-    "ast_hash": "6bbea9a4c244d0b51547eaaa2794be2e",
-    "semantic_hash": ""
-  },
   "src/components/dashboard/HomeCategoryList.tsx": {
     "mtime": 1791219839.4111598,
     "seen": 1791220019.8341238,
@@ -1679,24 +1673,6 @@
     "ast_hash": "0f94c2462937afa7d13b214bd24dbdaf",
     "semantic_hash": ""
   },
-  "mock/yatirim-fon.html": {
-    "mtime": 1791317368.963275,
-    "seen": 1791317370.747243,
-    "ast_hash": "b55d008d4a3f879b36d9bd0cbc7cc3de",
-    "semantic_hash": ""
-  },
-  "mock/login.html": {
-    "mtime": 1791220522.2318373,
-    "seen": 1791220731.3828356,
-    "ast_hash": "7c50a177823d66a61d676b4f8c927804",
-    "semantic_hash": ""
-  },
-  "mock/register.html": {
-    "mtime": 1791220549.2162833,
-    "seen": 1791220731.3828375,
-    "ast_hash": "73755b89f92eb3eb62c0e7fd0d9a69a2",
-    "semantic_hash": ""
-  },
   "src/lib/auth/identity.ts": {
     "mtime": 1791221173.3261638,
     "seen": 1791221275.081287,
@@ -1731,24 +1707,6 @@
     "mtime": 1791318240.6851983,
     "seen": 1791318267.0570962,
     "ast_hash": "08766a255e9b86677a152d8a89e3fc87",
-    "semantic_hash": ""
-  },
-  "mock/piyasalar.html": {
-    "mtime": 1791237258.5828013,
-    "seen": 1791237600.2301483,
-    "ast_hash": "84b40b00a1e946350d607023c8dcc255",
-    "semantic_hash": ""
-  },
-  "mock/asset-detail.html": {
-    "mtime": 1791290406.5386171,
-    "seen": 1791290681.172517,
-    "ast_hash": "2a00d8e5de635b95787414f50f109894",
-    "semantic_hash": ""
-  },
-  "mock/islem.html": {
-    "mtime": 1791298043.859868,
-    "seen": 1791298227.964658,
-    "ast_hash": "33f7390cafb0eb6c240ce75f4c0a29e3",
     "semantic_hash": ""
   },
   "data/news.json": {
@@ -1829,18 +1787,6 @@
     "ast_hash": "d497c065ca33649fde55aa8fb23cdd01",
     "semantic_hash": ""
   },
-  "mock/cuzdan.html": {
-    "mtime": 1791295171.751634,
-    "seen": 1791295532.3714602,
-    "ast_hash": "2191fc83b66c63c455c18b6df23d55e5",
-    "semantic_hash": ""
-  },
-  "mock/vadeli-mevduat.html": {
-    "mtime": 1791295280.783724,
-    "seen": 1791295532.3725114,
-    "ast_hash": "76dcc9202e3a953c026d5beb0a8fcbf8",
-    "semantic_hash": ""
-  },
   "src/app/[locale]/admin/vadeli-mevduat/page.tsx": {
     "mtime": 1791319843.3339036,
     "seen": 1791319938.1581113,
@@ -1877,12 +1823,6 @@
     "ast_hash": "b595fa58da7aaf8aca2a2a4eb111e401",
     "semantic_hash": ""
   },
-  "mock/varlik.html": {
-    "mtime": 1791298136.365347,
-    "seen": 1791298227.9659927,
-    "ast_hash": "d636f08d7e0a6c37b322570069122bc2",
-    "semantic_hash": ""
-  },
   "src/components/trading/AssetPicker.tsx": {
     "mtime": 1791298282.7210968,
     "seen": 1791298326.4003267,
@@ -1908,9 +1848,9 @@
     "semantic_hash": ""
   },
   "src/components/wallet/WalletFlow.tsx": {
-    "mtime": 1791321079.0217893,
-    "seen": 1791321202.6006868,
-    "ast_hash": "2913613c29002457824d99aac79c9def",
+    "mtime": 1791321362.6565914,
+    "seen": 1791754751.3941553,
+    "ast_hash": "8730dbc1bc0b768e99fc49f5665e10a9",
     "semantic_hash": ""
   },
   "src/lib/admin/crypto-address-actions.ts": {
@@ -2033,18 +1973,6 @@
     "ast_hash": "0de0681b0ee0cbafa530814290aee0ea",
     "semantic_hash": ""
   },
-  "mock/ayarlar.html": {
-    "mtime": 1791312607.80764,
-    "seen": 1791316328.914812,
-    "ast_hash": "5a837494081d5c6074b6c253e6111a5c",
-    "semantic_hash": ""
-  },
-  "mock/profil.html": {
-    "mtime": 1791312599.2116156,
-    "seen": 1791316328.915762,
-    "ast_hash": "b4b605e19bda30d447652e5166cddc58",
-    "semantic_hash": ""
-  },
   "src/components/dashboard/MobileInstallAction.tsx": {
     "mtime": 1791316663.7629876,
     "seen": 1791316696.9571736,
@@ -2117,22 +2045,10 @@
     "ast_hash": "e17988678739d6ad29e51f356af3f8ce",
     "semantic_hash": ""
   },
-  "mock/odul.html": {
-    "mtime": 1791317641.1599517,
-    "seen": 1791317850.255934,
-    "ast_hash": "f7ab1e3f78b66d36cd533be40dcebbb7",
-    "semantic_hash": ""
-  },
   "src/components/rewards/CampaignCard.tsx": {
     "mtime": 1791318450.9979763,
     "seen": 1791318537.5774598,
     "ast_hash": "4f60795262136f2bdf3b369dff47d0a0",
-    "semantic_hash": ""
-  },
-  "mock/davet.html": {
-    "mtime": 1791317982.6447694,
-    "seen": 1791318041.19591,
-    "ast_hash": "bf0ab5db1956813290f79494c8de044e",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/davet/page.tsx": {
@@ -2280,9 +2196,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/EntityEditors.tsx": {
-    "mtime": 1791320147.3213208,
-    "seen": 1791321202.5871165,
-    "ast_hash": "b47f9f9784fd6c77b3d8269941571d14",
+    "mtime": 1791754233.303386,
+    "seen": 1791754751.3764644,
+    "ast_hash": "db24611027a0fbec7d1ce21fddb67275",
     "semantic_hash": ""
   },
   "src/components/admin/ProviderBadge.tsx": {
@@ -2292,9 +2208,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/entity-actions.ts": {
-    "mtime": 1791319764.4519844,
-    "seen": 1791319938.165183,
-    "ast_hash": "9dfba595fe6e27d2ff247cdfb1cbf54e",
+    "mtime": 1791753957.655457,
+    "seen": 1791754751.397373,
+    "ast_hash": "a6ef5c3fe6231e62c416069c0531838b",
     "semantic_hash": ""
   },
   "src/lib/admin/presets.ts": {
@@ -2511,6 +2427,18 @@
     "mtime": 1791320913.520888,
     "seen": 1791321202.62531,
     "ast_hash": "a7c40c098fc7cb8ee9da281ad7b5c1ff",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/(app)/piyasalar/kripto/[symbol]/page.tsx": {
+    "mtime": 1791634323.5783043,
+    "seen": 1791754751.3684866,
+    "ast_hash": "ddd236ea3b86a0fbb1dcd2b016b6ac12",
+    "semantic_hash": ""
+  },
+  "src/lib/market-data/providers/binance-provider.ts": {
+    "mtime": 1791754181.222442,
+    "seen": 1791754751.4058683,
+    "ast_hash": "260db5c6108fcec0d7b23349ee2f2efe",
     "semantic_hash": ""
   }
 }

@@ -4,6 +4,7 @@ import { TCMBProvider } from "./providers/tcmb-provider";
 import { CommodityProvider } from "./providers/commodity-provider";
 import { YahooFinanceBistProvider } from "./providers/yahoo-bist-provider";
 import { YahooFinanceUsProvider } from "./providers/yahoo-us-provider";
+import { BinanceProvider } from "./providers/binance-provider";
 import { withCache } from "./cached-provider";
 
 /**
@@ -74,3 +75,9 @@ const yahooBist = withCache(new YahooFinanceBistProvider(), { quoteTtlSeconds: 1
 marketDataRegistry.register("STOCK", yahooBist);
 marketDataRegistry.register("INDEX", yahooBist);
 marketDataRegistry.register("US_STOCK", withCache(new YahooFinanceUsProvider(), { quoteTtlSeconds: 15 }));
+
+// Binance's public API — free, no key, real traded prices (converted USDT→TRY via Binance's own
+// USDTTRY pair) and a rate limit generous enough for this app's quote-polling volume, unlike the
+// CoinGecko free tier this used to hit 429s on. CoinGecko is still used, separately and rarely, to
+// fetch a coin's logo when an admin adds it (see entity-actions.ts), which doesn't need this limit.
+marketDataRegistry.register("CRYPTO", withCache(new BinanceProvider(), { quoteTtlSeconds: 20, staticTtlSeconds: 900 }));

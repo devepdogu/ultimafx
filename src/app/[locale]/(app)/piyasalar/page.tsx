@@ -62,12 +62,13 @@ async function loadStockRows(): Promise<StockRowData[]> {
 export default async function MarketsPage() {
   const user = await getCurrentUser();
 
-  const [bist, nasdaq, endeks, parite, emtia, favoriteItems] = await Promise.all([
+  const [bist, nasdaq, endeks, parite, emtia, kripto, favoriteItems] = await Promise.all([
     loadStockRows(),
     loadRows("US_STOCK"),
     loadRows("INDEX"),
     loadRows("CURRENCY"),
     loadRows("COMMODITY"),
+    loadRows("CRYPTO"),
     user
       ? prisma.watchlistItem.findMany({ where: { watchlist: { userId: user.id } }, select: { assetId: true } })
       : Promise.resolve([]),
@@ -83,6 +84,7 @@ export default async function MarketsPage() {
         emtia={emtia}
         endeks={endeks}
         parite={parite}
+        kripto={kripto}
         favoriteIds={favoriteIds}
       />
     </div>

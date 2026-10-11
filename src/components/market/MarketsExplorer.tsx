@@ -27,7 +27,7 @@ export interface StockRowData extends AssetRowData {
   volume: number | null;
 }
 
-type AssetClass = "bist" | "nasdaq" | "emtia" | "endeks" | "parite";
+type AssetClass = "bist" | "nasdaq" | "emtia" | "endeks" | "parite" | "kripto";
 type SortKey = "all" | "gainers" | "losers" | "favorites";
 
 function turkishIncludes(haystack: string, needle: string): boolean {
@@ -41,10 +41,11 @@ interface MarketsExplorerProps {
   emtia: AssetRowData[];
   endeks: AssetRowData[];
   parite: AssetRowData[];
+  kripto: AssetRowData[];
   favoriteIds: string[];
 }
 
-export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteIds }: MarketsExplorerProps) {
+export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, kripto, favoriteIds }: MarketsExplorerProps) {
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const [assetClass, setAssetClass] = useState<AssetClass>("bist");
   const [sort, setSort] = useState<SortKey>("all");
@@ -83,8 +84,10 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
               ? endeks
               : assetClass === "parite"
                 ? parite
-                : [],
-    [assetClass, bist, nasdaq, emtia, endeks, parite]
+                : assetClass === "kripto"
+                  ? kripto
+                  : [],
+    [assetClass, bist, nasdaq, emtia, endeks, parite, kripto]
   );
 
   const filtered = useMemo(() => {
@@ -138,6 +141,7 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
               { value: "emtia", label: "Emtia" },
               { value: "endeks", label: "Endeks" },
               { value: "parite", label: "Parite" },
+              { value: "kripto", label: "Kripto" },
             ]}
           />
         </div>
@@ -162,6 +166,14 @@ export function MarketsExplorer({ bist, nasdaq, emtia, endeks, parite, favoriteI
               icon={Rocket}
               title="Nasdaq varlığı henüz eklenmedi"
               description="ABD hisseleri yönetim panelinden eklendiğinde burada listelenir."
+            />
+          </Card>
+        ) : assetClass === "kripto" && kripto.length === 0 ? (
+          <Card className="mx-4">
+            <EmptyState
+              icon={Rocket}
+              title="Kripto varlığı henüz eklenmedi"
+              description="Kripto paralar yönetim panelinden eklendiğinde burada listelenir."
             />
           </Card>
         ) : (
