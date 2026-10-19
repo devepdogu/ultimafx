@@ -1,0 +1,16 @@
+# Reverse proxy in front of the `app` service. $DOMAIN comes from the .env file
+# that deploy.sh generates: a real domain name gets Caddy to request and renew
+# its own Let's Encrypt certificate automatically; left unset/"localhost" it
+# falls back to plain HTTP on :80, so this works before DNS is pointed anywhere.
+{$DOMAIN} {
+	reverse_proxy app:3000
+
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

@@ -4,9 +4,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ultima
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5434:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - ultima_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,12 +13,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # Not published to the host: only `app`/`worker`/`migrate` reach it, over the
+    # compose network, as `postgres:5432`. Uncomment to debug with a local psql:
+    # ports:
+    #   - "127.0.0.1:5434:5432"
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6380:6379"
     volumes:
       - ultima_redis_data:/data
     healthcheck:
@@ -27,7 +28,101 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # ports:
+    #   - "127.0.0.1:6380:6379"
+
+  # One-shot: applies pending migrations, then seeds (idempotent — upserts by
+  # unique key everywhere, so re-running it on every deploy is always safe).
+  # `app` and `worker` wait for this to exit 0 before they start.
+  migrate:
+    build:
+      context: .
+      target: builder
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ultima?schema=public
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+      # prisma/seed.ts refuses to run in production unless this is set — a deliberate
+      # second guard so a live database is never seeded by accident. Fine to leave on:
+      # every seed write is an upsert by a unique key, so running it on every deploy is safe.
+      ALLOW_PRODUCTION_SEED: "true"
+    command: sh -c "npx prisma migrate deploy && npm run db:seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+
+  worker:
+    build:
+      context: .
+      target: builder
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ultima?schema=public
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    command: npm run worker:start
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/ultima?schema=public
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: production
+    volumes:
+      # Admin-uploaded images (banners, news, asset/coin logos) are written to
+      # disk at runtime — kept on a named volume so a rebuild/redeploy of the
+      # image never deletes them.
+      - ultima_uploads:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # Published directly for a quick check (http://SERVER_IP:3000) or for
+    # setups with no domain/Caddy in front. Safe to remove once Caddy is the
+    # only public entry point.
+    ports:
+      - "3000:3000"
+
+  # Reverse proxy with automatic HTTPS (Let's Encrypt) when DOMAIN is a real,
+  # DNS-pointed domain. With DOMAIN unset/"localhost" it just serves plain
+  # HTTP on :80 — no certificate request, so it still works with no domain yet.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ultima_caddy_data:/data
+      - ultima_caddy_config:/config
+    depends_on:
+      - app
 
 volumes:
   ultima_postgres_data:
   ultima_redis_data:
+  ultima_uploads:
+  ultima_caddy_data:
+  ultima_caddy_config:

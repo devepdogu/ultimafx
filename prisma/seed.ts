@@ -1,10 +1,17 @@
 /**
- * Development-only seed data (section 51 of the product spec).
+ * Reference/catalog seed data — RBAC roles/permissions, the admin account, the
+ * BIST/Nasdaq/crypto asset catalog, investment funds, campaigns and term
+ * deposit products. Every upsert is keyed by a unique field, so re-running
+ * this (on every deploy, in dev or in prod) only ever creates-or-updates
+ * these same rows — it never seeds a fabricated *quote*: asset prices always
+ * come from a live MarketDataProvider (Binance/Yahoo/TCMB/...), never from
+ * here, in any environment.
  *
- * This seeds RBAC roles/permissions, the BIST exchange record, and a local
- * admin account so Phase 1 auth/RBAC can be exercised. It intentionally
- * seeds ZERO assets, quotes, or prices — production market data must only
- * ever come from a configured MarketDataProvider, never from seed data.
+ * This is meant to run in production too — it's how a brand-new deployment
+ * gets its admin account and tradable asset list in the first place — but
+ * only when deliberately asked for: in production it additionally requires
+ * ALLOW_PRODUCTION_SEED=true, so a seed never fires against a live database
+ * by accident. See docker-compose.yml's `migrate` service for where that's set.
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -184,8 +191,12 @@ async function seedCampaigns() {
 }
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Refusing to run seed data against a production environment.");
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_PRODUCTION_SEED !== "true") {
+    throw new Error(
+      "Refusing to run seed data against a production environment. This only seeds reference/" +
+        "catalog data (admin account, asset list, funds, campaigns) and is safe to re-run, but it " +
+        "requires an explicit ALLOW_PRODUCTION_SEED=true to make that an intentional choice, not an accident."
+    );
   }
 
   for (const key of PERMISSIONS) {
