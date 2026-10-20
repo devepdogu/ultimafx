@@ -133,30 +133,50 @@ export abstract class YahooFinanceProvider extends UnimplementedProviderBase {
     return results.filter((q): q is Quote => q !== null);
   }
 
-  /** Maps a (interval, from, to) request onto the closest Yahoo `range` bucket — Yahoo
-   * only accepts a fixed set of range tokens, not arbitrary date bounds. */
-  async getHistoricalPrices(
-    symbol: string,
-    _interval: PriceInterval,
-    from: Date,
-    to: Date
-  ): Promise<PriceBar[]> {
+  /** Our interval -> Yahoo's own `interval` query param. */
+  private static readonly YAHOO_INTERVAL: Record<PriceInterval, string> = {
+    MIN_1: "1m",
+    MIN_5: "5m",
+    MIN_15: "15m",
+    MIN_30: "30m",
+    HOUR_1: "60m",
+    DAY_1: "1d",
+    WEEK_1: "1wk",
+    MONTH_1: "1mo",
+  };
+
+  /** Yahoo only accepts a fixed set of `range` tokens, and limits how far back intraday
+   * granularities go (~7d for 1m, ~60d for 5m-60m) — picks the smallest token that both covers
+   * the requested span and respects that limit; results are clipped to [from, to] afterward. */
+  private static pickRange(yahooInterval: string, days: number): string {
+    if (yahooInterval === "1m") return "5d"; // Yahoo caps 1m history at ~7 days regardless
+    if (["5m", "15m", "30m", "60m"].includes(yahooInterval)) {
+      return days <= 5 ? "5d" : days <= 31 ? "1mo" : "3mo"; // ~60d cap on intraday beyond 1m
+    }
+    return days <= 31 ? "1mo" : days <= 93 ? "3mo" : days <= 186 ? "6mo" : days <= 366 ? "1y" : days <= 731 ? "2y" : "5y";
+  }
+
+  async getHistoricalPrices(symbol: string, interval: PriceInterval, from: Date, to: Date): Promise<PriceBar[]> {
     const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
-    const range =
-      days <= 7 ? "5d" : days <= 31 ? "1mo" : days <= 93 ? "3mo" : days <= 186 ? "6mo" : days <= 366 ? "1y" : "5y";
+    const yahooInterval = YahooFinanceProvider.YAHOO_INTERVAL[interval];
+    const range = YahooFinanceProvider.pickRange(yahooInterval, days);
 
     try {
-      const result = await this.fetchChart(symbol, range, "1d");
+      const result = await this.fetchChart(symbol, range, yahooInterval);
       if (!result?.timestamp || !result?.indicators?.quote?.[0]) return [];
 
       const { timestamp } = result;
       const q = result.indicators.quote[0];
+      const fromMs = from.getTime();
+      const toMs = to.getTime();
       const bars: PriceBar[] = [];
       for (let i = 0; i < timestamp.length; i++) {
         const close = q.close?.[i];
         if (close == null) continue;
+        const ms = timestamp[i] * 1000;
+        if (ms < fromMs || ms > toMs) continue; // Yahoo's range token covers more than asked
         bars.push({
-          timestamp: new Date(timestamp[i] * 1000).toISOString(),
+          timestamp: new Date(ms).toISOString(),
           open: q.open?.[i] ?? close,
           high: q.high?.[i] ?? close,
           low: q.low?.[i] ?? close,

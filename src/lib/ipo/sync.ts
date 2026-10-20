@@ -5,10 +5,13 @@ import { prisma } from "@/lib/prisma/client";
 
 /**
  * Ultima FX's own IPO list endpoint. It is our backend, so we read it directly.
- * Only structured fields are stored (company, code, price, dates, status) plus a
- * link to the source page. Descriptions and logos from upstream are not copied.
+ * Structured fields are stored (company, code, price, dates, status), a link to the source
+ * page, and — when the feed supplies one — a real logo URL (never guessed/fabricated; accepts
+ * a few common key spellings since different upstream aggregators name this differently).
  */
 const DEFAULT_IPO_SOURCE = "https://ultimafx.org/api/ipo/list";
+
+const optionalLogoUrl = z.string().url().nullable().optional();
 
 const ipoListSchema = z.object({
   ipos: z.array(
@@ -31,6 +34,10 @@ const ipoListSchema = z.object({
       lot_size: z.number().int().nullable().optional(),
       status: z.string(),
       url: z.string().url().nullable().optional(),
+      logo_url: optionalLogoUrl,
+      image_url: optionalLogoUrl,
+      image: optionalLogoUrl,
+      logo: optionalLogoUrl,
     })
   ),
 });
@@ -74,6 +81,7 @@ export async function syncIposFromFeed(): Promise<IpoSyncResult> {
   let updated = 0;
   for (const ipo of parsed.data.ipos) {
     const price = ipo.share_price ?? null;
+    const feedLogoUrl = ipo.logo_url ?? ipo.image_url ?? ipo.image ?? ipo.logo ?? null;
     const fields = {
       companyName: ipo.company_name,
       market: ipo.sector || null,
@@ -94,12 +102,17 @@ export async function syncIposFromFeed(): Promise<IpoSyncResult> {
       minAmountTry: ipo.min_amount_try ?? null,
       lotSize: ipo.lot_size ?? null,
     };
-    const existing = await prisma.iPO.findUnique({ where: { code: ipo.symbol }, select: { id: true } });
+    const existing = await prisma.iPO.findUnique({ where: { code: ipo.symbol }, select: { id: true, logoUrl: true } });
     if (existing) {
-      await prisma.iPO.update({ where: { id: existing.id }, data: fields });
+      // Never let a sync clobber a logo an admin uploaded by hand — same rule as the publish/
+      // featured flags above. Only fills it in when the row doesn't have one yet.
+      await prisma.iPO.update({
+        where: { id: existing.id },
+        data: { ...fields, ...(existing.logoUrl ? {} : { logoUrl: feedLogoUrl }) },
+      });
       updated++;
     } else {
-      await prisma.iPO.create({ data: { ...fields, code: ipo.symbol, isPublished: true } });
+      await prisma.iPO.create({ data: { ...fields, logoUrl: feedLogoUrl, code: ipo.symbol, isPublished: true } });
       created++;
     }
   }

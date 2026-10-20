@@ -16,6 +16,8 @@ import { Worker } from "bullmq";
 import { queueConnection } from "@/lib/queue/connection";
 import { MARKET_DATA_REFRESH_QUEUE, scheduleMarketDataRefresh } from "@/lib/queue/market-data-queue";
 import { marketDataRegistry } from "@/lib/market-data/registry";
+import { nextManualPrice } from "@/lib/market-data/manual-simulation";
+import { isMarketOpenAt } from "@/lib/market-data/market-hours";
 import { prisma } from "@/lib/prisma/client";
 
 async function refreshFxQuotes() {
@@ -30,12 +32,52 @@ async function refreshFxQuotes() {
   return { refreshed: quotes.length };
 }
 
+/**
+ * Walks every manual-override ("house") asset's price one bounded step,
+ * so it looks alive instead of frozen at whatever the admin last typed —
+ * see prisma/schema.prisma's Asset.manualBandPercent doc comment and
+ * src/lib/market-data/manual-simulation.ts.
+ */
+async function simulateManualPrices() {
+  const assets = await prisma.asset.findMany({
+    where: { manualOverrideEnabled: true, manualBasePrice: { not: null }, manualBandPercent: { not: null } },
+    select: { id: true, type: true, manualPrice: true, manualBasePrice: true, manualBandPercent: true },
+  });
+  const now = new Date();
+  let walked = 0;
+  for (const asset of assets) {
+    // A manual "stock" shouldn't move outside its market's hours any more than a real one
+    // would — see market-hours.ts. Leaves manualPrice exactly where it was overnight/weekends.
+    if (!isMarketOpenAt(asset.type, now)) continue;
+    const basePrice = Number(asset.manualBasePrice);
+    const bandPercent = Number(asset.manualBandPercent);
+    const current = asset.manualPrice != null ? Number(asset.manualPrice) : basePrice;
+    const next = nextManualPrice(current, basePrice, bandPercent);
+    const change = next - basePrice;
+    await prisma.asset.update({
+      where: { id: asset.id },
+      data: {
+        manualPrice: next,
+        manualChange: change,
+        manualChangePercent: basePrice !== 0 ? (change / basePrice) * 100 : 0,
+      },
+    });
+    walked++;
+  }
+  return { walked };
+}
+
 const worker = new Worker(
   MARKET_DATA_REFRESH_QUEUE,
   async (job) => {
     if (job.name === "refresh-fx") {
       const result = await refreshFxQuotes();
       console.log(`[worker] refresh-fx: warmed ${result.refreshed} quote(s)`);
+      return result;
+    }
+    if (job.name === "simulate-manual-prices") {
+      const result = await simulateManualPrices();
+      console.log(`[worker] simulate-manual-prices: walked ${result.walked} asset(s)`);
       return result;
     }
   },

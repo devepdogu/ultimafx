@@ -9,7 +9,7 @@ export default async function AdminSitePage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <AdminPageHeader title="Site Ayarları" description="Uygulamanın adı ve logosu. Değişiklik bir sonraki sayfa yüklemesinde herkese görünür." />
       <AdminPanel title="Marka">
-        <SiteSettingsForm siteName={settings.siteName} logoUrl={settings.logoUrl ?? ""} />
+        <SiteSettingsForm siteName={settings.siteName} logoUrl={settings.logoUrl ?? ""} liveChatCode={settings.liveChatCode ?? ""} />
       </AdminPanel>
     </div>
   );

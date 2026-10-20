@@ -5,7 +5,15 @@ import { AdminActionForm, AdminField, ADMIN_INPUT, ADMIN_TEXTAREA } from "@/comp
 import { ImageField } from "@/components/admin/ImageField";
 import { ProviderBadge } from "@/components/admin/ProviderBadge";
 import { BANK_PRESETS, CRYPTO_NETWORK_PRESETS, presetFor } from "@/lib/admin/presets";
-import { saveAssetAction, saveBankAction, saveCryptoAction, saveIpoAction, saveNewsAction, saveTermProductAction } from "@/lib/admin/entity-actions";
+import {
+  saveAssetAction,
+  saveBankAction,
+  saveCryptoAction,
+  saveIpoAction,
+  saveNewsAction,
+  saveTermProductAction,
+  setManualAssetPriceAction,
+} from "@/lib/admin/entity-actions";
 
 /** Date for datetime-local inputs, in the server's ISO form trimmed to minutes. */
 const toLocalInput = (iso: string | null | undefined) => (iso ? iso.slice(0, 16) : "");
@@ -21,6 +29,10 @@ export interface AssetValues {
   logoUrl: string | null;
   tradingEnabled: boolean;
   coingeckoId: string | null;
+  isCustom: boolean;
+  manualBasePrice: number | null;
+  manualBandPercent: number | null;
+  manualPrice: number | null;
 }
 
 /** Common ticker → CoinGecko id, shown as a hint; the admin can still type any other coin's id. */
@@ -58,6 +70,15 @@ export function AssetEditor({ asset }: { asset?: AssetValues }) {
   const [symbol, setSymbol] = useState(asset?.symbol ?? "");
   const isCrypto = type === "CRYPTO";
   const guessedId = COMMON_COINGECKO_IDS[symbol.trim().toUpperCase()];
+  // Every asset added through this form is a house instrument with no real market, so it is
+  // always manual-priced — on create there's nothing to check yet; on edit it's whatever the
+  // asset already is (fixed at creation, never toggleable).
+  const showManualFields = !asset || asset.isCustom;
+  // BIST's own circuit breaker caps a stock's daily move at ±10% — a manual BIST "hisse"
+  // can't simulate a wider swing than the real exchange would ever allow. No such cap exists
+  // for other asset classes.
+  const isBist = type === "STOCK" || type === "INDEX";
+  const maxBandPercent = isBist ? 10 : 100;
 
   return (
     <AdminActionForm action={saveAssetAction} submitLabel={asset ? "Değişiklikleri kaydet" : "Varlığı ekle"}>
@@ -117,7 +138,78 @@ export function AssetEditor({ asset }: { asset?: AssetValues }) {
           <input type="checkbox" name="tradingEnabled" defaultChecked={asset?.tradingEnabled ?? false} className="h-4 w-4 accent-brand" />
           Sanal işleme açık
         </label>
+        {showManualFields && (
+          <>
+            <AdminField
+              label="Taban fiyat"
+              hint={
+                asset
+                  ? "Bu varlık manuel fiyatlıdır. Fiyat buradan başlar ve zamanla dalgalanır, ama belirlediğiniz oynama payının dışına asla çıkmaz."
+                  : "Bu varlık piyasadan değil, buradan belirlediğiniz fiyattan başlayıp zamanla dalgalanacak."
+              }
+              className="md:col-span-2"
+            >
+              <input
+                name="manualBasePrice"
+                type="number"
+                step="0.000001"
+                min="0.000001"
+                required
+                defaultValue={asset?.manualBasePrice ?? ""}
+                className={ADMIN_INPUT}
+              />
+            </AdminField>
+            <AdminField
+              label="Oynama payı (%)"
+              hint={
+                isBist
+                  ? "BIST varlığı için en fazla %10 (borsanın günlük tavan/taban kuralı). Örn. 5 girilirse fiyat taban fiyatın ±%5 aralığında kalır."
+                  : "Örn. 5 girilirse fiyat taban fiyatın ±%5 aralığında kalır."
+              }
+            >
+              <input
+                name="manualBandPercent"
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={maxBandPercent}
+                required
+                defaultValue={asset?.manualBandPercent ?? ""}
+                className={ADMIN_INPUT}
+              />
+            </AdminField>
+          </>
+        )}
       </div>
+    </AdminActionForm>
+  );
+}
+
+/** Pushes a manual asset's current price up or down to a chosen value, right away — separate
+ * from the base-price field above, which re-centers the whole band instead of nudging the
+ * live price inside it. */
+export function ManualAssetPriceForm({
+  assetId,
+  currentPrice,
+  isBist,
+}: {
+  assetId: string;
+  currentPrice: number | null;
+  isBist: boolean;
+}) {
+  return (
+    <AdminActionForm action={setManualAssetPriceAction} submitLabel="Fiyatı uygula">
+      <input type="hidden" name="id" value={assetId} />
+      <AdminField
+        label="Fiyatı şuna ayarla"
+        hint={
+          isBist
+            ? "Taban fiyattan günlük %10'dan fazla uzaklaşamaz (borsanın tavan/taban kuralı) — aşarsanız en yakın sınıra çekilir."
+            : "Taban fiyattan ne kadar uzaklaşırsa oynama payı da otomatik olarak buna göre genişler."
+        }
+      >
+        <input name="targetPrice" type="number" step="0.000001" min="0.000001" required defaultValue={currentPrice ?? ""} className={ADMIN_INPUT} />
+      </AdminField>
     </AdminActionForm>
   );
 }
@@ -199,6 +291,7 @@ export interface IpoValues {
   demandCollectionStart: string | null;
   demandCollectionEnd: string | null;
   officialSourceUrl: string | null;
+  logoUrl: string | null;
 }
 
 const IPO_STATUSES = [
@@ -246,6 +339,7 @@ export function IpoEditor({ ipo }: { ipo?: IpoValues }) {
         <AdminField label="Resmi kaynak bağlantısı" hint="KAP veya şirketin duyurusu." className="md:col-span-2">
           <input name="officialSourceUrl" type="url" defaultValue={ipo?.officialSourceUrl ?? ""} className={ADMIN_INPUT} />
         </AdminField>
+        <ImageField name="logoUrl" label="Şirket logosu" defaultValue={ipo?.logoUrl} hint="İsteğe bağlı. Halka arz listesinde ve detayda görünür." className="md:col-span-2" />
       </div>
     </AdminActionForm>
   );

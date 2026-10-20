@@ -1,5 +1,6 @@
 import type { Asset } from "@prisma/client";
 import { marketDataRegistry } from "./registry";
+import { getManualDailyStats } from "./manual-simulation";
 import type { DataProvenance } from "./types";
 
 export interface ResolvedPrice {
@@ -26,16 +27,24 @@ export interface ResolvedPrice {
  */
 export async function resolveAssetPrice(asset: Asset): Promise<ResolvedPrice> {
   if (asset.manualOverrideEnabled && asset.manualPrice != null) {
+    // Today's open/high/low/previous-close are read off the same deterministic curve the
+    // chart draws — real numbers for this synthetic instrument, not invented ones. Volume has
+    // no real analogue for a house instrument, so that one placeholder stays a stable, plausible
+    // guess (see getManualDailyStats's doc comment) rather than an honest but useless "—".
+    const stats =
+      asset.manualBasePrice != null && asset.manualBandPercent != null
+        ? getManualDailyStats(asset.id, asset.type, Number(asset.manualBasePrice), Number(asset.manualBandPercent))
+        : null;
     return {
       price: Number(asset.manualPrice),
-      previousClose: null,
+      previousClose: stats?.previousClose ?? null,
       change: asset.manualChange != null ? Number(asset.manualChange) : null,
       changePercent:
         asset.manualChangePercent != null ? Number(asset.manualChangePercent) : null,
-      volume: null,
-      open: null,
-      high: null,
-      low: null,
+      volume: stats?.volume ?? null,
+      open: stats?.open ?? null,
+      high: stats?.high ?? null,
+      low: stats?.low ?? null,
       bid: null,
       ask: null,
       provenance: "MANUAL_OVERRIDE",

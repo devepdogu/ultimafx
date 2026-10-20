@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { ToastProvider } from "@/components/ui/Toaster";
+import { getSiteSettings } from "@/lib/site/settings";
 import "../globals.css";
 
 // `next/font/google`'s loader for these two fonts fails Next 16's Turbopack
@@ -36,6 +37,7 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
+  const { liveChatCode } = await getSiteSettings();
 
   return (
     <html
@@ -64,6 +66,11 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider><ToastProvider>{children}</ToastProvider></NextIntlClientProvider>
+        {liveChatCode && (
+          // Trusted admin-only input (set in /admin/site), injected verbatim on every page —
+          // the same trust level as an uploaded image or a banner link. See site-actions.ts.
+          <div dangerouslySetInnerHTML={{ __html: liveChatCode }} />
+        )}
       </body>
     </html>
   );

@@ -30,6 +30,8 @@ export interface IpoRow {
   maxLotPerUser: number | null;
   minAmountTry: number | null;
   sourceUrl: string | null;
+  /** Logo set directly on the IPO by an admin — shown before falling back to a matching asset. */
+  logoUrl: string | null;
   /** Logo from our own asset list when the same symbol is listed; null otherwise. */
   logo: { type: string; logoUrl: string | null } | null;
 }
@@ -79,6 +81,12 @@ function priceText(row: IpoRow) {
 const dateText = (iso: string | null) => (iso ? formatDateTime(iso) : "-");
 
 function Logo({ row, size }: { row: IpoRow; size: number }) {
+  if (row.logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- admin-provided logo, any host
+      <img src={row.logoUrl} alt="" width={size} height={size} className="shrink-0 rounded-full border border-border bg-white object-contain" style={{ width: size, height: size }} />
+    );
+  }
   if (row.logo) {
     return <AssetIcon symbol={row.code} type={row.logo.type as AssetType} logoUrl={row.logo.logoUrl} size={size} />;
   }

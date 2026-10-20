@@ -130,7 +130,7 @@ export function NewsCreateForm() {
   );
 }
 
-export function SiteSettingsForm({ siteName, logoUrl }: { siteName: string; logoUrl: string }) {
+export function SiteSettingsForm({ siteName, logoUrl, liveChatCode }: { siteName: string; logoUrl: string; liveChatCode: string }) {
   return (
     <AdminActionForm action={updateSiteSettingsAction} submitLabel="Ayarları kaydet">
       <div className="grid gap-4 md:grid-cols-2">
@@ -138,6 +138,19 @@ export function SiteSettingsForm({ siteName, logoUrl }: { siteName: string; logo
           <input name="siteName" defaultValue={siteName} required minLength={2} maxLength={60} className={ADMIN_INPUT} />
         </AdminField>
         <ImageField name="logoUrl" label="Logo" defaultValue={logoUrl} hint="Boş bırakılırsa varsayılan logo kullanılır." />
+        <AdminField
+          label="Canlı destek kodu"
+          hint="Sağlayıcınızın (Tawk.to, Crisp, Intercom vb.) verdiği embed kodunu olduğu gibi yapıştırın. Her sayfada, en altta çalışır. Boş bırakılırsa hiçbir şey eklenmez. Bu alan olduğu gibi siteye basılır — yalnızca güvendiğiniz bir sağlayıcıdan gelen kodu yapıştırın."
+          className="md:col-span-2"
+        >
+          <textarea
+            name="liveChatCode"
+            rows={6}
+            defaultValue={liveChatCode}
+            placeholder={'<script>\n  // sağlayıcınızın verdiği kod\n</script>'}
+            className={`${ADMIN_TEXTAREA} font-mono text-[12px]`}
+          />
+        </AdminField>
       </div>
     </AdminActionForm>
   );

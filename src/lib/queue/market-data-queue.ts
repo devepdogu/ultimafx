@@ -28,4 +28,12 @@ export async function scheduleMarketDataRefresh() {
       opts: { removeOnComplete: 10, removeOnFail: 10 },
     }
   );
+  await marketDataQueue.upsertJobScheduler(
+    "simulate-manual-prices-scheduler",
+    { every: 60 * 1000 }, // every minute, so manual-override assets visibly move
+    {
+      name: "simulate-manual-prices",
+      opts: { removeOnComplete: 10, removeOnFail: 10 },
+    }
+  );
 }

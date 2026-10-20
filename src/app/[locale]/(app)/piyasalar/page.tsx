@@ -21,7 +21,9 @@ function popularRank(symbol: string): number {
 async function loadRows(assetType: AssetType): Promise<AssetRowData[]> {
   const assets = await prisma.asset.findMany({
     where: { type: assetType, isActive: true, visibility: "PUBLIC" },
-    orderBy: { symbol: "asc" },
+    // Manual/custom assets (admin-priced house instruments) surface first within their
+    // category — they have no real popularity signal to rank by.
+    orderBy: [{ isCustom: "desc" }, { symbol: "asc" }],
   });
   const resolved = await Promise.all(assets.map((a) => resolveAssetPrice(a)));
   return assets.map((asset, i) => ({
@@ -42,7 +44,12 @@ async function loadStockRows(): Promise<StockRowData[]> {
   const assets = await prisma.asset.findMany({
     where: { type: "STOCK", isActive: true, visibility: "PUBLIC" },
   });
-  assets.sort((a, b) => popularRank(a.symbol) - popularRank(b.symbol) || a.symbol.localeCompare(b.symbol));
+  assets.sort(
+    (a, b) =>
+      Number(b.isCustom) - Number(a.isCustom) ||
+      popularRank(a.symbol) - popularRank(b.symbol) ||
+      a.symbol.localeCompare(b.symbol)
+  );
   const resolved = await Promise.all(assets.map((a) => resolveAssetPrice(a)));
   return assets.map((asset, i) => ({
     id: asset.id,

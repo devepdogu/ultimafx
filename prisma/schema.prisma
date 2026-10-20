@@ -248,6 +248,11 @@ model User {
   termsAcceptedAt DateTime?
   kvkkAcceptedAt  DateTime?
   passwordHash    String?
+  /// Reversibly encrypted (AES-256-GCM, see secret-box.ts) copy of the current password, so an
+  /// admin can view it on request — separate from passwordHash, which stays a one-way bcrypt
+  /// hash and is what login actually checks against. Null for any account whose password
+  /// predates this field (nothing to view until it's next changed).
+  passwordEncrypted String?
   name            String?
   image           String?
   gender          String?
@@ -456,6 +461,11 @@ model Asset {
   manualPrice           Decimal? @db.Decimal(20, 6)
   manualChange          Decimal? @db.Decimal(20, 6)
   manualChangePercent   Decimal? @db.Decimal(10, 4)
+  /// Admin-set reference price the simulated walk is anchored to (the band's center).
+  manualBasePrice   Decimal? @db.Decimal(20, 6)
+  /// Max allowed drift from manualBasePrice, as a percent (e.g. 5 = ±5%). Worker-driven
+  /// random walk never pushes manualPrice outside [basePrice*(1-p/100), basePrice*(1+p/100)].
+  manualBandPercent Decimal? @db.Decimal(6, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -755,6 +765,9 @@ model IPO {
   expectedListingDate   DateTime?
   status                IPOStatus @default(UPCOMING)
   officialSourceUrl     String?
+  /// Company logo for the IPO list and detail drawer. Independent of Asset.logoUrl —
+  /// an IPO's stock usually isn't a tradable Asset yet, so it can't just borrow that logo.
+  logoUrl               String?
   documents             Json?
   /// Demand as a percent of the offering, from the IPO source (e.g. 44.4).
   demandRatio           Decimal?  @db.Decimal(10, 2)
@@ -1042,10 +1055,13 @@ model InvestmentFund {
 }
 
 model SiteSettings {
-  id        String   @id @default("default")
-  siteName  String   @default("Ultima FX")
-  logoUrl   String?
-  updatedAt DateTime @updatedAt
+  id           String   @id @default("default")
+  siteName     String   @default("Ultima FX")
+  logoUrl      String?
+  /// Raw embed snippet (e.g. a live-chat widget's <script>) injected near the end of <body> on
+  /// every page. Admin-only input, trusted the same way an uploaded image or a banner link is.
+  liveChatCode String?
+  updatedAt    DateTime @updatedAt
 }
 
 model TermDepositProduct {

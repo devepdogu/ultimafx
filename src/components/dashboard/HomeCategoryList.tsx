@@ -21,7 +21,9 @@ export async function HomeCategoryList() {
   const types = [...new Set(Object.values(CATEGORY_TYPES).flat())];
   const assets = await prisma.asset.findMany({
     where: { type: { in: types }, isActive: true, visibility: "PUBLIC" },
-    orderBy: { symbol: "asc" },
+    // Manual/custom assets (admin-priced house instruments) surface first within their
+    // category — they have no real popularity signal to rank by, so "newest/house" wins.
+    orderBy: [{ isCustom: "desc" }, { symbol: "asc" }],
   });
   const resolved = await resolveAssetPrices(assets);
   const rowById = new Map<string, HomeRow>(

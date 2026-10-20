@@ -15,6 +15,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { encryptSecret } from "../src/lib/crypto/secret-box";
 
 const prisma = new PrismaClient();
 
@@ -619,6 +620,7 @@ async function main() {
   const adminRole = await prisma.role.findUniqueOrThrow({ where: { key: "SUPER_ADMIN" } });
 
   const passwordHash = await bcrypt.hash(adminPassword, 12);
+  const passwordEncrypted = encryptSecret(adminPassword);
   const admin = await prisma.user.upsert({
     where: { phone: adminPhone },
     update: {},
@@ -626,6 +628,7 @@ async function main() {
       phone: adminPhone,
       name: "Ultima Admin",
       passwordHash,
+      passwordEncrypted,
       status: "ACTIVE",
       wallet: { create: {} },
       portfolio: { create: {} },

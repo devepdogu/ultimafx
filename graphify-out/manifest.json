@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
-    "mtime": 1792414395.6820786,
-    "seen": 1792414681.102315,
-    "ast_hash": "a9b3434b8fa26689f58da7a58d288e6e",
+    "mtime": 1792533956.0710983,
+    "seen": 1792534173.9743152,
+    "ast_hash": "febafb8bd77d64a443a145c75c5337ad",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/cuzdan/page.tsx": {
@@ -132,9 +132,9 @@
     "semantic_hash": "64821e52b570f7d1f6f4af0c9978979c"
   },
   "src/app/[locale]/(app)/piyasalar/page.tsx": {
-    "mtime": 1791634059.929095,
-    "seen": 1791754751.3690376,
-    "ast_hash": "bdbdeb1e47ef87031b7faa854c0b2b45",
+    "mtime": 1792532521.0342402,
+    "seen": 1792532607.3610592,
+    "ast_hash": "481e65cf9178f498b34f52d4680a34b1",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/portfoy/page.tsx": {
@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/layout.tsx": {
-    "mtime": 1792414660.3237355,
-    "seen": 1792414681.1057513,
-    "ast_hash": "5021a5a2847cdfa05da134ccc4c748e6",
+    "mtime": 1792528631.501112,
+    "seen": 1792529136.7812076,
+    "ast_hash": "6fed243af5348b94379154b3d49bd591",
     "semantic_hash": ""
   },
   "src/app/api/auth/[...nextauth]/route.ts": {
@@ -300,9 +300,9 @@
     "semantic_hash": ""
   },
   "src/components/market/PriceChart.tsx": {
-    "mtime": 1791294643.1456394,
-    "seen": 1791294723.5076997,
-    "ast_hash": "9a50ee0c56f04d050f79287e44e29876",
+    "mtime": 1792534215.206771,
+    "seen": 1792534330.5805933,
+    "ast_hash": "ea334671655e1cab04eda28b6407166d",
     "semantic_hash": ""
   },
   "src/components/portfolio/AllocationDonut.tsx": {
@@ -420,15 +420,15 @@
     "semantic_hash": "b49507d418c12f206f4326fd35150329"
   },
   "src/lib/audit/log.ts": {
-    "mtime": 1790954561.0604706,
-    "seen": 1791148474.3543985,
-    "ast_hash": "8e4d553fc8b5d109519d621da39ca83a",
-    "semantic_hash": "8e4d553fc8b5d109519d621da39ca83a"
+    "mtime": 1792533849.5312564,
+    "seen": 1792534174.0072918,
+    "ast_hash": "c7631da874b6e163529c57326db1d242",
+    "semantic_hash": ""
   },
   "src/lib/auth/actions.ts": {
-    "mtime": 1791221182.8755455,
-    "seen": 1791221275.081284,
-    "ast_hash": "37dc1747b98bd229b30502f03f5f688c",
+    "mtime": 1792533892.5494857,
+    "seen": 1792534174.007297,
+    "ast_hash": "735afa02822b5d47d0db894232420775",
     "semantic_hash": ""
   },
   "src/lib/auth/auth.ts": {
@@ -480,10 +480,10 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/get-history.ts": {
-    "mtime": 1790967572.5977619,
-    "seen": 1791148474.354405,
-    "ast_hash": "2ba4c49c7ade271c6edba266d4f3a6bd",
-    "semantic_hash": "2ba4c49c7ade271c6edba266d4f3a6bd"
+    "mtime": 1792533060.6285992,
+    "seen": 1792533108.1805725,
+    "ast_hash": "64f3de488b0b281dc2a36e19cbdf6013",
+    "semantic_hash": ""
   },
   "src/lib/market-data/provider.ts": {
     "mtime": 1790955342.453374,
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/resolve-price.ts": {
-    "mtime": 1791290558.589092,
-    "seen": 1791290681.1676257,
-    "ast_hash": "f9eff1e242247663f9d718ee6f3b385f",
+    "mtime": 1792533640.8640463,
+    "seen": 1792534174.0161092,
+    "ast_hash": "1ea0820026dc26eda416cb39fe750e4d",
     "semantic_hash": ""
   },
   "src/lib/market-data/types/index.ts": {
@@ -594,10 +594,10 @@
     "semantic_hash": "1085a67d634e9079cb254c332d3dc64d"
   },
   "src/lib/queue/market-data-queue.ts": {
-    "mtime": 1790955700.4764018,
-    "seen": 1791148474.354417,
-    "ast_hash": "01764b88dad286dc394ed2e3f7eee975",
-    "semantic_hash": "01764b88dad286dc394ed2e3f7eee975"
+    "mtime": 1792529075.3671713,
+    "seen": 1792529136.7971103,
+    "ast_hash": "1ca4977cccaf5697bf311c920a0d5c69",
+    "semantic_hash": ""
   },
   "src/lib/trading/actions.ts": {
     "mtime": 1791302358.648353,
@@ -666,10 +666,10 @@
     "semantic_hash": "b8c9600a61a35ca743d948c332abb223"
   },
   "src/workers/market-data-refresh.worker.ts": {
-    "mtime": 1790955627.6566126,
-    "seen": 1791148474.3544242,
-    "ast_hash": "b94590ee6fb9e2acc6e4dc58acf5ec74",
-    "semantic_hash": "b94590ee6fb9e2acc6e4dc58acf5ec74"
+    "mtime": 1792532987.111426,
+    "seen": 1792533108.1839826,
+    "ast_hash": "e83a521f308c86385b0a675d2727a87d",
+    "semantic_hash": ""
   },
   "tsconfig.json": {
     "mtime": 1790952166.4656863,
@@ -726,15 +726,15 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/varliklar/page.tsx": {
-    "mtime": 1791634189.700814,
-    "seen": 1791754751.3733625,
-    "ast_hash": "849df2476ea1fad09139c4f37a90ebc8",
+    "mtime": 1792533553.7596965,
+    "seen": 1792534173.9824307,
+    "ast_hash": "1f45e6219373ca23a4f3ea91b8787001",
     "semantic_hash": ""
   },
   "src/components/admin/ContentForms.tsx": {
-    "mtime": 1791319381.6710582,
-    "seen": 1791319398.7782178,
-    "ast_hash": "45fb587ff03790193871535df2a70026",
+    "mtime": 1792528589.95444,
+    "seen": 1792529136.782624,
+    "ast_hash": "aeb78ab304a396e3d36599e9d73c2df9",
     "semantic_hash": ""
   },
   "src/components/dashboard/HomeBanners.tsx": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "src/lib/market-data/providers/yahoo-finance-provider.ts": {
-    "mtime": 1791291757.8199694,
-    "seen": 1791291788.9586842,
-    "ast_hash": "60ff0ad6555e9e92ae7e1e4bf12ea3ee",
+    "mtime": 1792533075.9963393,
+    "seen": 1792533108.1815333,
+    "ast_hash": "b2453ba9985a02d219eea03042b76663",
     "semantic_hash": ""
   },
   "src/lib/market-data/providers/yahoo-us-provider.ts": {
@@ -1596,9 +1596,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/halka-arz/page.tsx": {
-    "mtime": 1791317805.9886658,
-    "seen": 1791317850.2415972,
-    "ast_hash": "5157e7ef3e1dadbb560c435102a15e6d",
+    "mtime": 1792534302.4618812,
+    "seen": 1792534330.5618334,
+    "ast_hash": "0a247efe2e90a0f4ebe7819df6ba222c",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/odulller/page.tsx": {
@@ -1626,9 +1626,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/HomeCategoryList.tsx": {
-    "mtime": 1791219839.4111598,
-    "seen": 1791220019.8341238,
-    "ast_hash": "e531e6748ae2bd87a61d1a8bcf16e7ed",
+    "mtime": 1792532512.7783573,
+    "seen": 1792532607.3646007,
+    "ast_hash": "dc35592bb6ac6128f5fe766b79255958",
     "semantic_hash": ""
   },
   "src/components/dashboard/MarketCards.tsx": {
@@ -1686,21 +1686,21 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/site/page.tsx": {
-    "mtime": 1791319145.499555,
-    "seen": 1791319398.7748787,
-    "ast_hash": "ca219136563b13cd274008268caa1d48",
+    "mtime": 1792528615.6237617,
+    "seen": 1792529136.781125,
+    "ast_hash": "85b2e9e6c8f1bc061ca86da17e584c4d",
     "semantic_hash": ""
   },
   "src/lib/admin/site-actions.ts": {
-    "mtime": 1791221365.0158024,
-    "seen": 1791221492.13076,
-    "ast_hash": "3559075c1abea62bbc52569bd7fc7a0b",
+    "mtime": 1792528606.214419,
+    "seen": 1792529136.793673,
+    "ast_hash": "89dd3980d9a91eb4db86ab4729add862",
     "semantic_hash": ""
   },
   "src/lib/site/settings.ts": {
-    "mtime": 1791221354.1020432,
-    "seen": 1791221492.1373596,
-    "ast_hash": "a7c26d72ed1f8c2302ea1bf93df1e984",
+    "mtime": 1792528605.0841398,
+    "seen": 1792529136.797206,
+    "ast_hash": "acd5e929e5c8d6ab00fd9253c54fc245",
     "semantic_hash": ""
   },
   "src/components/layout/AppHeader.tsx": {
@@ -1932,9 +1932,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/halka-arz/page.tsx": {
-    "mtime": 1791319838.9266365,
-    "seen": 1791319938.157654,
-    "ast_hash": "6ab3f94dca992bd1faa726c53a16ee68",
+    "mtime": 1792528032.5253024,
+    "seen": 1792529136.780571,
+    "ast_hash": "35bbd7e14cabe8d0976d1447da067d34",
     "semantic_hash": ""
   },
   "src/lib/admin/feed-actions.ts": {
@@ -1944,9 +1944,9 @@
     "semantic_hash": ""
   },
   "src/lib/ipo/sync.ts": {
-    "mtime": 1791308560.2536569,
-    "seen": 1791308702.8969667,
-    "ast_hash": "c5d7aa37877a89ec488122d26606db6d",
+    "mtime": 1792534263.686167,
+    "seen": 1792534330.5977774,
+    "ast_hash": "2e09645243cd0e2fba2309a7521cd053",
     "semantic_hash": ""
   },
   "src/lib/news/sync.ts": {
@@ -1956,9 +1956,9 @@
     "semantic_hash": ""
   },
   "src/components/ipo/IpoList.tsx": {
-    "mtime": 1791308633.1037521,
-    "seen": 1791308702.873255,
-    "ast_hash": "ff6eb6917fba6d35dde81c895888649b",
+    "mtime": 1792527988.2682836,
+    "seen": 1792529136.7869883,
+    "ast_hash": "6b0f79b035af3b5c3522c063190c09d3",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/ayarlar/page.tsx": {
@@ -2004,9 +2004,9 @@
     "semantic_hash": ""
   },
   "src/lib/auth/account-actions.ts": {
-    "mtime": 1791317311.5657327,
-    "seen": 1791317370.7414002,
-    "ast_hash": "6456426117c1a13e41f8c63172f7c97b",
+    "mtime": 1792533859.2496943,
+    "seen": 1792534174.0072947,
+    "ast_hash": "dfdb1e56716db00e7fdb93a1a9dab856",
     "semantic_hash": ""
   },
   "src/components/profile/KycUploader.tsx": {
@@ -2070,9 +2070,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/[id]/page.tsx": {
-    "mtime": 1791319036.4294126,
-    "seen": 1791319398.774866,
-    "ast_hash": "6b7579b11ba3944e2e4061a7c2a78cae",
+    "mtime": 1792534109.89407,
+    "seen": 1792534173.9811225,
+    "ast_hash": "57ed7460569e91a3aa22324ffe219f78",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/page.tsx": {
@@ -2166,9 +2166,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/user-actions.ts": {
-    "mtime": 1791318969.8904183,
-    "seen": 1791319398.8123689,
-    "ast_hash": "f24ef291923e2ab2e253ee059b443c57",
+    "mtime": 1792533846.3102913,
+    "seen": 1792534174.006998,
+    "ast_hash": "e38acbaeb5a8af81cdafcc5abec6e295",
     "semantic_hash": ""
   },
   "src/lib/admin/user-status.ts": {
@@ -2196,9 +2196,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/EntityEditors.tsx": {
-    "mtime": 1791754233.303386,
-    "seen": 1791754751.3764644,
-    "ast_hash": "db24611027a0fbec7d1ce21fddb67275",
+    "mtime": 1792533547.177874,
+    "seen": 1792534173.9847786,
+    "ast_hash": "e99549a1d51b5b3451024b8233692471",
     "semantic_hash": ""
   },
   "src/components/admin/ProviderBadge.tsx": {
@@ -2208,9 +2208,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/entity-actions.ts": {
-    "mtime": 1791753957.655457,
-    "seen": 1791754751.397373,
-    "ast_hash": "a6ef5c3fe6231e62c416069c0531838b",
+    "mtime": 1792533511.8194103,
+    "seen": 1792534174.0052187,
+    "ast_hash": "db11bc7d05198eb8e6caf47e7031dc54",
     "semantic_hash": ""
   },
   "src/lib/admin/presets.ts": {
@@ -2445,6 +2445,30 @@
     "mtime": 1792413760.6440773,
     "seen": 1792414681.1021032,
     "ast_hash": "92eee81b6ad4598634c98664469b156a",
+    "semantic_hash": ""
+  },
+  "src/lib/market-data/manual-simulation.ts": {
+    "mtime": 1792533624.6275978,
+    "seen": 1792534174.0117478,
+    "ast_hash": "a4248e86818308668bbec9ae1fdbce0d",
+    "semantic_hash": ""
+  },
+  "src/lib/market-data/market-hours.ts": {
+    "mtime": 1792532964.189124,
+    "seen": 1792533108.180576,
+    "ast_hash": "38e2e4fada99ddca2926f36951774907",
+    "semantic_hash": ""
+  },
+  "src/components/admin/RevealPasswordButton.tsx": {
+    "mtime": 1792534087.7134533,
+    "seen": 1792534173.9855046,
+    "ast_hash": "13eebca48ab73eb6cf5eb9f9a4071215",
+    "semantic_hash": ""
+  },
+  "src/lib/crypto/secret-box.ts": {
+    "mtime": 1792533950.9611256,
+    "seen": 1792534174.0097961,
+    "ast_hash": "6d15bec9cec5e9c9ca5392e597dd23fb",
     "semantic_hash": ""
   }
 }

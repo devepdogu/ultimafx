@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { requireUser } from "./rbac";
 import { prisma } from "@/lib/prisma/client";
+import { encryptSecret } from "@/lib/crypto/secret-box";
 
 export interface AccountActionState {
   error?: string;
@@ -53,7 +54,8 @@ export async function changePasswordAction(_prev: AccountActionState, formData: 
   if (wrong) return { error: wrong };
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  const passwordEncrypted = encryptSecret(parsed.data.newPassword);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash, passwordEncrypted } });
   return { ok: true };
 }
 

@@ -88,6 +88,7 @@ export default async function AdminIposPage({ searchParams }: { searchParams: Pr
                       demandCollectionStart: ipo.demandCollectionStart?.toISOString() ?? null,
                       demandCollectionEnd: ipo.demandCollectionEnd?.toISOString() ?? null,
                       officialSourceUrl: ipo.officialSourceUrl,
+                      logoUrl: ipo.logoUrl,
                     }}
                   />
                 </AdminRecord>

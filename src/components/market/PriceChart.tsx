@@ -59,7 +59,12 @@ export function PriceChart({ symbol, volume }: PriceChartProps) {
       if (!res.ok) throw new Error("HISTORY_FETCH_FAILED");
       return res.json();
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    // The header price above this chart re-renders on every page load/navigation, but this
+    // query doesn't — without a refetch interval, an admin's manual price push (or a live
+    // provider tick) only reaches the chart on a hard reload, while the header already shows it.
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 
   const bars = useMemo(() => data?.bars ?? [], [data]);

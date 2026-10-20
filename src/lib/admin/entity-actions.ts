@@ -35,18 +35,44 @@ function fail(issue: z.ZodIssue | undefined, fallback: string): AdminActionResul
 
 // ---------- Varlıklar ----------
 
-const assetSchema = z.object({
-  name: z.string().trim().min(1, "Varlık adı zorunlu.").max(200),
-  type: z.enum(["STOCK", "US_STOCK", "INDEX", "CURRENCY", "COMMODITY", "CRYPTO", "FUND"]),
-  currency: z.string().trim().length(3, "Para birimi üç harf olmalı."),
-  logoUrl: optionalUrl,
-  tradingEnabled: z.boolean(),
-  coingeckoId: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .max(60)
-    .transform((v) => v || null),
+// BIST's own circuit breaker caps a single stock's daily move at ±10% from the reference
+// price — a manual BIST "hisse" can't be given a wider simulated band than the real exchange
+// would ever allow. No such limit exists for other asset classes (crypto, FX, commodities).
+const BIST_TYPES = new Set(["STOCK", "INDEX"]);
+const BIST_MAX_BAND_PERCENT = 10;
+
+const assetSchema = z
+  .object({
+    name: z.string().trim().min(1, "Varlık adı zorunlu.").max(200),
+    type: z.enum(["STOCK", "US_STOCK", "INDEX", "CURRENCY", "COMMODITY", "CRYPTO", "FUND"]),
+    currency: z.string().trim().length(3, "Para birimi üç harf olmalı."),
+    logoUrl: optionalUrl,
+    tradingEnabled: z.boolean(),
+    coingeckoId: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .max(60)
+      .transform((v) => v || null),
+    manualBasePrice: optionalNumber.refine((v) => v === null || v > 0, "Taban fiyat 0'dan büyük olmalı."),
+    manualBandPercent: optionalNumber.refine(
+      (v) => v === null || (v > 0 && v <= 100),
+      "Oynama payı 0 ile 100 arasında olmalı."
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (BIST_TYPES.has(data.type) && data.manualBandPercent != null && data.manualBandPercent > BIST_MAX_BAND_PERCENT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["manualBandPercent"],
+        message: `BIST varlıkları için oynama payı en fazla %${BIST_MAX_BAND_PERCENT} olabilir (borsanın günlük tavan/taban kuralı).`,
+      });
+    }
+  });
+
+const manualPriceSchema = z.object({
+  id: z.string().min(1),
+  targetPrice: z.coerce.number().refine((v) => Number.isFinite(v) && v > 0, "Geçerli bir fiyat girin."),
 });
 
 /** Real logo from CoinGecko for a coin id, or null if the lookup fails — never a guessed/fabricated URL. */
@@ -74,10 +100,13 @@ export async function saveAssetAction(_prev: AdminActionResult, formData: FormDa
     logoUrl: formData.get("logoUrl") ?? "",
     tradingEnabled: formData.get("tradingEnabled") === "on",
     coingeckoId: formData.get("coingeckoId") ?? "",
+    manualBasePrice: formData.get("manualBasePrice") ?? "",
+    manualBandPercent: formData.get("manualBandPercent") ?? "",
   });
   if (!parsed.success) return fail(parsed.error.issues[0], "Geçersiz alanlar.");
   // Only CRYPTO assets use a CoinGecko id; keep it null for everything else so stale values never linger.
-  const data = { ...parsed.data, coingeckoId: parsed.data.type === "CRYPTO" ? parsed.data.coingeckoId : null };
+  const { manualBasePrice, manualBandPercent, ...rest } = parsed.data;
+  const data = { ...rest, coingeckoId: parsed.data.type === "CRYPTO" ? parsed.data.coingeckoId : null };
   // No logo was uploaded by hand: for a crypto with a known coin id, pull the real logo from CoinGecko
   // itself rather than leaving the asset without one or inventing a placeholder.
   if (data.type === "CRYPTO" && data.coingeckoId && !data.logoUrl) {
@@ -87,8 +116,28 @@ export async function saveAssetAction(_prev: AdminActionResult, formData: FormDa
   if (id) {
     const before = await prisma.asset.findUnique({ where: { id } });
     if (!before) return { error: "Varlık bulunamadı." };
-    // The symbol is the price-feed key and is fixed after creation.
-    await prisma.asset.update({ where: { id }, data });
+    // Manual pricing is permanent for an asset once it's created with it (isCustom) — never
+    // toggleable afterward, and never settable on an asset that started out as a real,
+    // provider-fed one. This keeps "which assets simulate a price" unambiguous.
+    if (!before.isCustom) {
+      await prisma.asset.update({ where: { id }, data });
+    } else {
+      if (manualBasePrice === null || manualBandPercent === null) {
+        return { error: "Taban fiyat ve oynama payı zorunlu." };
+      }
+      // Base price changed: re-center the live walk on the new reference so it starts fresh
+      // inside the new band, rather than drifting in from wherever the old walk happened to be.
+      const basePriceChanged = Number(before.manualBasePrice ?? NaN) !== manualBasePrice;
+      await prisma.asset.update({
+        where: { id },
+        data: {
+          ...data,
+          manualBasePrice,
+          manualBandPercent,
+          ...(basePriceChanged ? { manualPrice: manualBasePrice, manualChange: 0, manualChangePercent: 0 } : {}),
+        },
+      });
+    }
     await writeAuditLog({ adminUserId: admin.id, action: "ASSET_UPDATED", entityType: "Asset", entityId: id, oldValue: { name: before.name }, newValue: { name: data.name } });
     revalidatePath("/piyasalar");
     return { success: "Varlık güncellendi." };
@@ -97,10 +146,89 @@ export async function saveAssetAction(_prev: AdminActionResult, formData: FormDa
   const symbol = String(formData.get("symbol") ?? "").trim().toUpperCase();
   if (!/^[A-Z0-9.\-=^]{1,20}$/.test(symbol)) return { error: "Sembol 1-20 karakter olmalı (harf, rakam, nokta)." };
   if (await prisma.asset.findUnique({ where: { symbol } })) return { error: "Bu sembol zaten kayıtlı." };
-  const created = await prisma.asset.create({ data: { ...data, symbol, decimalPrecision: 2, isActive: true, visibility: "PUBLIC" } });
+  // Every asset created through this admin panel is a house instrument with no real market —
+  // it is manual-priced from the moment it exists, no separate toggle needed or offered.
+  if (manualBasePrice === null || manualBandPercent === null) {
+    return { error: "Taban fiyat ve oynama payı zorunlu." };
+  }
+  const created = await prisma.asset.create({
+    data: {
+      ...data,
+      symbol,
+      decimalPrecision: 2,
+      isActive: true,
+      visibility: "PUBLIC",
+      isCustom: true,
+      manualOverrideEnabled: true,
+      manualBasePrice,
+      manualBandPercent,
+      manualPrice: manualBasePrice,
+      manualChange: 0,
+      manualChangePercent: 0,
+    },
+  });
   await writeAuditLog({ adminUserId: admin.id, action: "ASSET_CREATED", entityType: "Asset", entityId: created.id, newValue: { symbol } });
   revalidatePath("/piyasalar");
   return { success: `${symbol} eklendi.` };
+}
+
+/** Pushes a manual/custom asset's current price up or down to a chosen value, clamped to its band. */
+export async function setManualAssetPriceAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
+  const admin = await requireAdmin();
+  const parsed = manualPriceSchema.safeParse({ id: formData.get("id"), targetPrice: formData.get("targetPrice") });
+  if (!parsed.success) return fail(parsed.error.issues[0], "Geçersiz fiyat.");
+
+  const asset = await prisma.asset.findUnique({ where: { id: parsed.data.id } });
+  if (!asset) return { error: "Varlık bulunamadı." };
+  if (!asset.isCustom || !asset.manualOverrideEnabled || asset.manualBasePrice == null || asset.manualBandPercent == null) {
+    return { error: "Bu varlık manuel fiyatlı değil." };
+  }
+
+  const basePrice = Number(asset.manualBasePrice);
+  const configuredBandPercent = Number(asset.manualBandPercent);
+  // The configured band is what the automated worker walk wiggles within day to day (kept
+  // tight for a believable, subtle drift). A manual override is a deliberate admin decision,
+  // not the automated walk, so it gets a wider ceiling: BIST's own real daily tavan/taban is
+  // ±10% from the reference price — never less than whatever band is already configured — and
+  // other asset classes have no regulatory daily cap at all, so nothing clamps them here.
+  const hardLimitPercent = BIST_TYPES.has(asset.type) ? Math.max(configuredBandPercent, BIST_MAX_BAND_PERCENT) : null;
+  const hardLimit = hardLimitPercent != null ? basePrice * (hardLimitPercent / 100) : null;
+  const clamped =
+    hardLimit != null
+      ? Math.min(basePrice + hardLimit, Math.max(basePrice - hardLimit, parsed.data.targetPrice))
+      : parsed.data.targetPrice;
+  const change = clamped - basePrice;
+  const before = Number(asset.manualPrice ?? basePrice);
+
+  // The band the worker's automatic walk respects must cover wherever the admin just put the
+  // price, or the very next tick would clamp it straight back toward the old, narrower band.
+  const reachedBandPercent = basePrice !== 0 ? (Math.abs(change) / basePrice) * 100 : configuredBandPercent;
+  const newBandPercent = Math.max(configuredBandPercent, Math.min(reachedBandPercent, hardLimitPercent ?? reachedBandPercent));
+
+  await prisma.asset.update({
+    where: { id: asset.id },
+    data: {
+      manualPrice: clamped,
+      manualChange: change,
+      manualChangePercent: basePrice !== 0 ? (change / basePrice) * 100 : 0,
+      manualBandPercent: newBandPercent,
+    },
+  });
+  await writeAuditLog({
+    adminUserId: admin.id,
+    action: "PRICE_UPDATED",
+    entityType: "Asset",
+    entityId: asset.id,
+    oldValue: { price: before },
+    newValue: { price: clamped },
+  });
+  revalidatePath("/piyasalar");
+  return {
+    success:
+      clamped !== parsed.data.targetPrice
+        ? `Fiyat günlük %${hardLimitPercent} tavan/taban sınırına (${clamped.toFixed(6)}) çekildi.`
+        : `Fiyat ${clamped.toFixed(6)} olarak ayarlandı.`,
+  };
 }
 
 export async function deleteAssetAction(id: string): Promise<AdminActionResult> {
@@ -183,6 +311,7 @@ const ipoSchema = z.object({
   demandCollectionStart: z.preprocess(blankToNull, z.coerce.date().nullable()),
   demandCollectionEnd: z.preprocess(blankToNull, z.coerce.date().nullable()),
   officialSourceUrl: optionalUrl,
+  logoUrl: optionalUrl,
 });
 
 export async function saveIpoAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
@@ -197,6 +326,7 @@ export async function saveIpoAction(_prev: AdminActionResult, formData: FormData
     demandCollectionStart: formData.get("demandCollectionStart") ?? "",
     demandCollectionEnd: formData.get("demandCollectionEnd") ?? "",
     officialSourceUrl: formData.get("officialSourceUrl") ?? "",
+    logoUrl: formData.get("logoUrl") ?? "",
   });
   if (!parsed.success) return fail(parsed.error.issues[0], "Geçersiz halka arz alanları.");
 

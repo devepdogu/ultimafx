@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma/client";
-import { AssetEditor } from "@/components/admin/EntityEditors";
+import { AssetEditor, ManualAssetPriceForm } from "@/components/admin/EntityEditors";
 import { AdminFilters } from "@/components/admin/AdminFilters";
 import { AdminRecord, RecordActions } from "@/components/admin/AdminRecord";
 import { AdminEmpty, AdminPageHeader, AdminPanel, StatusPill } from "@/components/admin/AdminUi";
@@ -28,7 +28,7 @@ export default async function AdminAssetsPage({ searchParams }: { searchParams: 
       ...(status === "hidden" ? { isActive: false } : status === "active" ? { isActive: true } : {}),
       ...(type ? { type: type as "STOCK" | "US_STOCK" | "INDEX" | "CURRENCY" | "COMMODITY" | "CRYPTO" | "FUND" } : {}),
     },
-    orderBy: [{ type: "asc" }, { symbol: "asc" }],
+    orderBy: [{ isCustom: "desc" }, { type: "asc" }, { symbol: "asc" }],
     take: 300,
   });
 
@@ -84,6 +84,7 @@ export default async function AdminAssetsPage({ searchParams }: { searchParams: 
                         {a.tradingEnabled ? <StatusPill tone="positive">İşlem açık</StatusPill> : <StatusPill tone="neutral">İşlem kapalı</StatusPill>}
                         {!a.isActive && <StatusPill tone="negative">Gizli</StatusPill>}
                         {a.type === "CRYPTO" && !a.coingeckoId && <StatusPill tone="warning">Coin id eksik</StatusPill>}
+                        {a.isCustom && <StatusPill tone="neutral">Manuel fiyat</StatusPill>}
                       </div>
                       <span className="truncate text-[12px] text-muted">
                         {a.name} · {a.currency}
@@ -102,9 +103,33 @@ export default async function AdminAssetsPage({ searchParams }: { searchParams: 
                   </>
                 }
               >
-                <AssetEditor
-                  asset={{ id: a.id, symbol: a.symbol, name: a.name, type: a.type, currency: a.currency, logoUrl: a.logoUrl, tradingEnabled: a.tradingEnabled, coingeckoId: a.coingeckoId }}
-                />
+                <div className="flex flex-col gap-4">
+                  <AssetEditor
+                    asset={{
+                      id: a.id,
+                      symbol: a.symbol,
+                      name: a.name,
+                      type: a.type,
+                      currency: a.currency,
+                      logoUrl: a.logoUrl,
+                      tradingEnabled: a.tradingEnabled,
+                      coingeckoId: a.coingeckoId,
+                      isCustom: a.isCustom,
+                      manualBasePrice: a.manualBasePrice != null ? Number(a.manualBasePrice) : null,
+                      manualBandPercent: a.manualBandPercent != null ? Number(a.manualBandPercent) : null,
+                      manualPrice: a.manualPrice != null ? Number(a.manualPrice) : null,
+                    }}
+                  />
+                  {a.isCustom && (
+                    <div className="border-t border-border pt-4">
+                      <ManualAssetPriceForm
+                        assetId={a.id}
+                        currentPrice={a.manualPrice != null ? Number(a.manualPrice) : null}
+                        isBist={a.type === "STOCK" || a.type === "INDEX"}
+                      />
+                    </div>
+                  )}
+                </div>
               </AdminRecord>
             ))}
           </div>

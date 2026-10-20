@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma/client";
 import { signIn, signOut } from "./auth";
 import { loginSchema, registerSchema } from "./schemas";
 import { hashTcKimlik, isValidTcKimlik, normalizePhone } from "./identity";
+import { encryptSecret } from "@/lib/crypto/secret-box";
 
 export interface ActionResult {
   error?: string;
@@ -67,6 +68,7 @@ export async function registerAction(_prev: ActionResult, formData: FormData): P
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const passwordEncrypted = encryptSecret(password);
   const userRole = await prisma.role.findUnique({ where: { key: "USER" } });
   const refCode = String(formData.get("ref") ?? "").trim().toUpperCase();
   const referrer = refCode
@@ -80,6 +82,7 @@ export async function registerAction(_prev: ActionResult, formData: FormData): P
       phone,
       tcKimlikHash,
       passwordHash,
+      passwordEncrypted,
       termsAcceptedAt: now,
       kvkkAcceptedAt: now,
       status: "ACTIVE",
