@@ -15,7 +15,6 @@ import {
   type TradeActionResult,
 } from "@/lib/trading/actions";
 import { closeLeveragedPositionAction, placeLeveragedOrderAction } from "@/lib/trading/leverage-actions";
-import { MAX_LEVERAGE } from "@/lib/trading/leverage-constants";
 import { isAssetSessionOpen, sessionHoursLabel } from "@/lib/trading/session";
 import { cn } from "@/lib/utils/cn";
 import { formatChangePercent } from "@/lib/utils/format";
@@ -82,6 +81,7 @@ interface TradeTerminalProps {
   positions: TerminalPosition[];
   orders: TerminalOrder[];
   leveragedPositions: TerminalLeveragedPosition[];
+  maxLeverage: number;
   initialSide?: "BUY" | "SELL";
   loggedIn: boolean;
   pickerAssets: PickerAsset[];
@@ -106,7 +106,7 @@ const pfmt = (v: number | null) => (v == null ? "—" : priceFmt.format(v));
 const fmtMoney = (v: number | null, currency: string) => (v == null ? "—" : `${money.format(v)} ${currency}`);
 
 export function TradeTerminal(props: TradeTerminalProps) {
-  const { asset, price, bid, ask, changePercent, cashBalance, balanceCurrency, heldQuantity, positions, orders, leveragedPositions, loggedIn, pickerAssets } = props;
+  const { asset, price, bid, ask, changePercent, cashBalance, balanceCurrency, heldQuantity, positions, orders, leveragedPositions, maxLeverage, loggedIn, pickerAssets } = props;
   const router = useRouter();
   const [mode, setMode] = useState<"MARKET" | "LIMIT">("MARKET");
   const [side, setSide] = useState<"BUY" | "SELL">(props.initialSide ?? "BUY");
@@ -127,6 +127,10 @@ export function TradeTerminal(props: TradeTerminalProps) {
   const refPrice = mode === "LIMIT" ? parsedLimit : side === "BUY" ? buyPrice : sellPrice;
   const positionValue = refPrice != null ? quantity * refPrice : null;
   const requiredMargin = positionValue != null ? positionValue / leverage : null;
+  const leverageQuickPicks = useMemo(() => {
+    const picks = [1, Math.round(maxLeverage / 4), Math.round(maxLeverage / 2), maxLeverage].filter((v) => v > 0);
+    return [...new Set(picks)].slice(0, 4);
+  }, [maxLeverage]);
   const maxQty = useMemo(() => {
     if (side === "SELL") return heldQuantity;
     return refPrice && refPrice > 0 ? Math.floor((cashBalance / refPrice) * (isWhole ? 1 : 100)) / (isWhole ? 1 : 100) : 0;
@@ -346,14 +350,14 @@ export function TradeTerminal(props: TradeTerminalProps) {
           </div>
         </div>
 
-        {mode === "MARKET" && (
+        {mode === "MARKET" && maxLeverage > 1 && (
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-center justify-between text-[12px] font-semibold text-muted">
               <span>Kaldıraç</span>
-              <span>1x - {MAX_LEVERAGE}x</span>
+              <span>1x - {maxLeverage}x</span>
             </div>
             <div className="grid grid-cols-5 gap-2">
-              {[1, 2, 5, 10].map((lv) => (
+              {leverageQuickPicks.map((lv) => (
                 <button
                   key={lv}
                   type="button"
@@ -371,7 +375,7 @@ export function TradeTerminal(props: TradeTerminalProps) {
                 value={leverage}
                 onChange={(e) => {
                   const v = Math.round(Number(e.target.value));
-                  if (Number.isFinite(v)) setLeverage(Math.min(MAX_LEVERAGE, Math.max(1, v)));
+                  if (Number.isFinite(v)) setLeverage(Math.min(maxLeverage, Math.max(1, v)));
                 }}
                 className="num-tabular h-9 rounded-full bg-surface-2 text-center text-[13px] font-semibold text-foreground outline-none"
               />

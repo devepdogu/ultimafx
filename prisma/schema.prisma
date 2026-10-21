@@ -634,6 +634,22 @@ model LeveragedPosition {
   @@index([status])
 }
 
+/// Per-asset-class leveraged-trading terms — what BIST/Nasdaq/Emtia/Endeks/Parite/Kripto are
+/// each allowed to trade at. Read by leverage-engine.ts on every open (max leverage, contract
+/// size, minimum lot); spread/swap are stored and admin-editable but not yet applied to
+/// pricing/financing — see leverage-config.ts's doc comment for why.
+model LeverageConfig {
+  id            String    @id @default(cuid())
+  type          AssetType @unique
+  maxLeverage   Int
+  contractSize  Decimal   @db.Decimal(20, 6)
+  minLot        Decimal   @db.Decimal(20, 6)
+  spreadPercent Decimal   @db.Decimal(10, 4)
+  longSwap      Decimal   @db.Decimal(10, 4)
+  shortSwap     Decimal   @db.Decimal(10, 4)
+  updatedAt     DateTime  @updatedAt
+}
+
 model Portfolio {
   id     String @id @default(cuid())
   userId String @unique
@@ -1127,18 +1143,39 @@ model SiteSettings {
 }
 
 model TermDepositProduct {
-  id         String               @id @default(cuid())
-  accounts   TermDepositAccount[]
-  currency   String               @default("TRY")
-  termDays   Int
-  annualRate Decimal              @db.Decimal(8, 4)
-  minAmount  Decimal              @db.Decimal(20, 2)
-  position   Int                  @default(0)
-  isActive   Boolean              @default(true)
-  createdAt  DateTime             @default(now())
-  updatedAt  DateTime             @updatedAt
+  id             String               @id @default(cuid())
+  accounts       TermDepositAccount[]
+  currency       String               @default("TRY")
+  termDays       Int
+  /// Admin-facing name for this term, e.g. "7 Günlük" — purely cosmetic, shown instead of a
+  /// bare day count. Falls back to "{termDays} gün" when null (rows that predate this field).
+  label          String?
+  /// Stored, derived value: InterestConfig's base annual rate for this currency × rateMultiplier
+  /// — recomputed by recomputeTermProductRates() whenever either input changes. Kept as a real
+  /// column (not computed on read) because TermDepositAccount snapshots it at open time and the
+  /// trading/service code already reads it directly.
+  annualRate     Decimal              @db.Decimal(8, 4)
+  rateMultiplier Decimal              @default(1) @db.Decimal(6, 4)
+  minAmount      Decimal              @db.Decimal(20, 2)
+  position       Int                  @default(0)
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([isActive, currency, position])
+}
+
+/// Singleton (id is always "default") — the two base annual rates every TermDepositProduct's
+/// rate derives from, plus the maturity/early-exit policy. See recomputeTermProductRates().
+model InterestConfig {
+  id                            String   @id @default("default")
+  tryAnnualRate                 Decimal  @default(0) @db.Decimal(8, 4)
+  usdAnnualRate                 Decimal  @default(0) @db.Decimal(8, 4)
+  autoDistribute                Boolean  @default(true)
+  /// % of accrued interest forfeited on an early withdrawal (0-100). Stored for the admin
+  /// config UI; no early-withdrawal action reads it yet — see the Faiz Yönetimi doc note.
+  earlyWithdrawalPenaltyPercent Decimal  @default(0) @db.Decimal(5, 2)
+  updatedAt                     DateTime @updatedAt
 }
 
 model TermDepositAccount {

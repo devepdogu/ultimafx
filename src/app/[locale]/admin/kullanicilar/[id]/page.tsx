@@ -5,6 +5,7 @@ import { AdminActionForm, AdminField, ADMIN_INPUT, ADMIN_TEXTAREA } from "@/comp
 import { AdminInfo, AdminPageHeader, AdminPanel, StatusPill, type PillTone } from "@/components/admin/AdminUi";
 import {
   adjustUserBalanceAction,
+  adminCloseHoldingAction,
   adminPlaceMarketOrderAction,
   revealUserPasswordAction,
   revealUserTcKimlikAction,
@@ -13,9 +14,12 @@ import {
   setUserStatusAction,
   updateHoldingQuantityAction,
 } from "@/lib/admin/user-actions";
+import { adminCloseLeveragedPositionAction, adminEditLeveragedPositionAction } from "@/lib/admin/leverage-actions";
 import { RevealSecretButton } from "@/components/admin/RevealSecretButton";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import { formatDateTime } from "@/lib/utils/format";
 import { USER_STATUS } from "@/lib/admin/user-status";
+import { resolveAssetPrices } from "@/lib/market-data/resolve-price";
 
 const KYC_TONE: Record<string, { label: string; tone: PillTone }> = {
   PENDING: { label: "İncelenecek", tone: "warning" },
@@ -70,7 +74,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       portfolio: {
         select: {
           holdings: {
-            select: { id: true, quantity: true, averageCost: true, asset: { select: { symbol: true, name: true, currency: true, logoUrl: true } } },
+            select: { id: true, quantity: true, averageCost: true, asset: true },
             orderBy: { updatedAt: "desc" },
           },
         },
@@ -84,6 +88,42 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const alreadyApproved = user.kycDocuments.length > 0 && user.kycDocuments.every((d) => d.reviewStatus === "APPROVED");
   const holdings = user.portfolio?.holdings ?? [];
 
+  const leveraged = await prisma.leveragedPosition.findMany({
+    where: { userId: user.id, status: "OPEN" },
+    include: { asset: true },
+  });
+
+  const distinctAssets = [
+    ...new Map([...holdings.map((h) => h.asset), ...leveraged.map((p) => p.asset)].map((a) => [a.id, a])).values(),
+  ];
+  const resolved = await resolveAssetPrices(distinctAssets);
+  const priceByAssetId = new Map(distinctAssets.map((a, i) => [a.id, resolved[i].price]));
+
+  // Broken out by currency rather than converted into one number — same honest-aggregation
+  // rule as the platform-wide balance overview on /admin.
+  const summary = { TRY: { cash: Number(user.wallet?.cashBalance ?? 0), spotValue: 0, pnl: 0, margin: 0 }, USD: { cash: Number(user.wallet?.usdBalance ?? 0), spotValue: 0, pnl: 0, margin: 0 } };
+  for (const h of holdings) {
+    const bucket = h.asset.currency === "USD" ? summary.USD : summary.TRY;
+    const price = priceByAssetId.get(h.asset.id);
+    const quantity = Number(h.quantity);
+    const averageCost = Number(h.averageCost);
+    if (price != null) {
+      bucket.spotValue += price * quantity;
+      bucket.pnl += (price - averageCost) * quantity;
+    }
+  }
+  for (const p of leveraged) {
+    const bucket = p.currency === "USD" ? summary.USD : summary.TRY;
+    bucket.margin += Number(p.margin);
+    const price = priceByAssetId.get(p.asset.id);
+    if (price != null) {
+      const entryPrice = Number(p.entryPrice);
+      const quantity = Number(p.quantity);
+      const contractSize = Number(p.contractSize);
+      bucket.pnl += (p.side === "BUY" ? price - entryPrice : entryPrice - price) * quantity * contractSize;
+    }
+  }
+
   return (
     <div className="flex max-w-5xl flex-col gap-6">
       <AdminPageHeader
@@ -91,6 +131,34 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         description={`${user.email ?? "e-posta yok"} · ${user.phone ?? "telefon yok"}`}
         actions={<Link href="/admin/kullanicilar" className="h-9 rounded-lg border border-border px-3 text-[12px] font-bold leading-9">Listeye dön</Link>}
       />
+
+      <AdminPanel title="Finansal özet" description="Nakit, açık pozisyonların güncel değeri ve toplam kâr/zarar — para birimine göre ayrı, karıştırılmadan.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(["TRY", "USD"] as const).map((cur) => {
+            const s = summary[cur];
+            const total = s.cash + s.spotValue + s.margin;
+            const pnlTone = s.pnl >= 0 ? "text-positive" : "text-negative";
+            return (
+              <div key={cur} className="flex flex-col gap-3 rounded-xl border border-border bg-surface-2 p-4">
+                <span className="text-[12px] font-extrabold uppercase tracking-wide text-muted">{cur}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <AdminInfo label="Nakit" value={`${num.format(s.cash)} ${cur}`} />
+                  <AdminInfo label="Spot pozisyon değeri" value={`${num.format(s.spotValue)} ${cur}`} />
+                  <AdminInfo label="Kaldıraçlı teminat" value={`${num.format(s.margin)} ${cur}`} />
+                  <AdminInfo
+                    label="Toplam K/Z (açık pozisyon)"
+                    value={<span className={pnlTone}>{`${s.pnl >= 0 ? "+" : ""}${num.format(s.pnl)} ${cur}`}</span>}
+                  />
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <span className="text-[12px] font-bold text-muted">Genel toplam</span>
+                  <span className="num-tabular text-[16px] font-extrabold">{num.format(total)} {cur}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </AdminPanel>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AdminPanel title="Hesap">
@@ -224,38 +292,120 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </AdminActionForm>
       </AdminPanel>
 
-      <AdminPanel title={`Pozisyonlar (${holdings.length})`} description="Adet (lot) ve maliyeti elle düzeltin. Bu bir alım/satım değildir — nakit hareket etmez.">
+      <AdminPanel title={`Spot pozisyonlar (${holdings.length})`} description="Gerçek alım/satım ile açılmış pozisyonlar. Elle düzeltme nakit hareket ettirmez; kapatma, güncel fiyattan gerçek bir satıştır.">
         {holdings.length === 0 ? (
           <p className="text-[13px] text-muted">Kullanıcının açık pozisyonu yok.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {holdings.map((h) => (
-              <details key={h.id} className="overflow-hidden rounded-xl border border-border">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                  <div className="flex min-w-0 flex-col">
-                    <span className="text-[13px] font-bold">{h.asset.symbol}</span>
-                    <span className="truncate text-[11px] text-muted">
-                      {qty.format(Number(h.quantity))} adet · ort. maliyet {num.format(Number(h.averageCost))} {h.asset.currency}
-                    </span>
-                  </div>
-                  <span className="shrink-0 text-[12px] font-bold text-brand">Düzenle</span>
-                </summary>
-                <div className="border-t border-border px-4 py-4">
-                  <AdminActionForm action={updateHoldingQuantityAction} submitLabel="Pozisyonu kaydet">
-                    <input type="hidden" name="holdingId" value={h.id} />
-                    <input type="hidden" name="userId" value={user.id} />
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <AdminField label="Adet (lot)" hint="0 girilirse pozisyon kapatılır.">
-                        <input name="quantity" type="number" step="0.000001" min="0" required defaultValue={h.quantity.toString()} className={ADMIN_INPUT} />
-                      </AdminField>
-                      <AdminField label={`Ortalama maliyet (${h.asset.currency})`}>
-                        <input name="averageCost" type="number" step="0.000001" min="0" required defaultValue={h.averageCost.toString()} className={ADMIN_INPUT} />
-                      </AdminField>
+            {holdings.map((h) => {
+              const currentPrice = priceByAssetId.get(h.asset.id) ?? null;
+              const quantity = Number(h.quantity);
+              const averageCost = Number(h.averageCost);
+              const pnl = currentPrice != null ? (currentPrice - averageCost) * quantity : null;
+              return (
+                <details key={h.id} className="overflow-hidden rounded-xl border border-border">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-[13px] font-bold">{h.asset.symbol}</span>
+                      <span className="truncate text-[11px] text-muted">
+                        {qty.format(quantity)} adet · ort. maliyet {num.format(averageCost)} {h.asset.currency}
+                        {currentPrice != null && ` · güncel ${num.format(currentPrice)}`}
+                      </span>
                     </div>
-                  </AdminActionForm>
-                </div>
-              </details>
-            ))}
+                    {pnl != null && (
+                      <span className={`num-tabular shrink-0 text-[12px] font-bold ${pnl >= 0 ? "text-positive" : "text-negative"}`}>
+                        {pnl >= 0 ? "+" : ""}
+                        {num.format(pnl)} {h.asset.currency}
+                      </span>
+                    )}
+                    <span className="shrink-0 text-[12px] font-bold text-brand">Düzenle</span>
+                  </summary>
+                  <div className="flex flex-col gap-4 border-t border-border px-4 py-4">
+                    <AdminActionForm action={updateHoldingQuantityAction} submitLabel="Pozisyonu kaydet">
+                      <input type="hidden" name="holdingId" value={h.id} />
+                      <input type="hidden" name="userId" value={user.id} />
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <AdminField label="Adet (lot)" hint="Elle düzeltme — nakit hareket etmez. 0 girilirse pozisyon kapatılır.">
+                          <input name="quantity" type="number" step="0.000001" min="0" required defaultValue={h.quantity.toString()} className={ADMIN_INPUT} />
+                        </AdminField>
+                        <AdminField label={`Ortalama maliyet (${h.asset.currency})`}>
+                          <input name="averageCost" type="number" step="0.000001" min="0" required defaultValue={h.averageCost.toString()} className={ADMIN_INPUT} />
+                        </AdminField>
+                      </div>
+                    </AdminActionForm>
+                    <DeleteButton
+                      label="Pozisyonu kapat (sat)"
+                      confirmText={`${h.asset.symbol} pozisyonu güncel fiyattan satılarak kapatılacak. Emin misiniz?`}
+                      run={adminCloseHoldingAction.bind(null, h.id)}
+                    />
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        )}
+      </AdminPanel>
+
+      <AdminPanel title={`Kaldıraçlı pozisyonlar (${leveraged.length})`} description="Teminatlı pozisyonlar. Düzenleme teminatı yeniden hesaplar, farkı cüzdana ekler/çıkarır.">
+        {leveraged.length === 0 ? (
+          <p className="text-[13px] text-muted">Kullanıcının açık kaldıraçlı pozisyonu yok.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {leveraged.map((p) => {
+              const currentPrice = priceByAssetId.get(p.asset.id) ?? null;
+              const quantity = Number(p.quantity);
+              const entryPrice = Number(p.entryPrice);
+              const contractSize = Number(p.contractSize);
+              const margin = Number(p.margin);
+              const pnl = currentPrice != null ? (p.side === "BUY" ? currentPrice - entryPrice : entryPrice - currentPrice) * quantity * contractSize : null;
+              return (
+                <details key={p.id} className="overflow-hidden rounded-xl border border-border">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                    <div className="flex min-w-0 flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: p.side === "BUY" ? "#00A651" : "#FF4976" }}>
+                          {p.side === "BUY" ? "ALIŞ" : "SATIŞ"}
+                        </span>
+                        <span className="text-[13px] font-bold">{p.asset.symbol}</span>
+                        <span className="text-[11px] text-muted">1:{p.leverage}</span>
+                      </div>
+                      <span className="truncate text-[11px] text-muted">
+                        {qty.format(quantity)} adet · teminat {num.format(margin)} {p.currency}
+                        {currentPrice != null && ` · güncel ${num.format(currentPrice)}`}
+                      </span>
+                    </div>
+                    {pnl != null && (
+                      <span className={`num-tabular shrink-0 text-[12px] font-bold ${pnl >= 0 ? "text-positive" : "text-negative"}`}>
+                        {pnl >= 0 ? "+" : ""}
+                        {num.format(pnl)} {p.currency}
+                      </span>
+                    )}
+                    <span className="shrink-0 text-[12px] font-bold text-brand">Düzenle</span>
+                  </summary>
+                  <div className="flex flex-col gap-4 border-t border-border px-4 py-4">
+                    <AdminActionForm action={adminEditLeveragedPositionAction} submitLabel="Pozisyonu kaydet">
+                      <input type="hidden" name="positionId" value={p.id} />
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <AdminField label="Lot">
+                          <input name="quantity" type="number" step="0.000001" min="0.000001" required defaultValue={quantity} className={ADMIN_INPUT} />
+                        </AdminField>
+                        <AdminField label="Giriş fiyatı">
+                          <input name="entryPrice" type="number" step="0.000001" min="0.000001" required defaultValue={entryPrice} className={ADMIN_INPUT} />
+                        </AdminField>
+                        <AdminField label="Kaldıraç">
+                          <input name="leverage" type="number" step="1" min="1" required defaultValue={p.leverage} className={ADMIN_INPUT} />
+                        </AdminField>
+                      </div>
+                    </AdminActionForm>
+                    <DeleteButton
+                      label="Pozisyonu kapat"
+                      confirmText={`${p.asset.symbol} pozisyonu güncel fiyattan kapatılacak. Emin misiniz?`}
+                      run={adminCloseLeveragedPositionAction.bind(null, p.id)}
+                    />
+                  </div>
+                </details>
+              );
+            })}
           </div>
         )}
       </AdminPanel>

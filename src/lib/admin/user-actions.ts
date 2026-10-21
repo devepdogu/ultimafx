@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
 import { writeAuditLog } from "@/lib/audit/log";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
-import { executeMarketOrder } from "@/lib/trading/engine";
+import { cancelOrder, executeMarketOrder } from "@/lib/trading/engine";
 import { TradingError } from "@/lib/trading/errors";
 import type { AdminActionResult } from "./content-actions";
 
@@ -211,6 +211,7 @@ export async function updateHoldingQuantityAction(_prev: AdminActionResult, form
     newValue: { symbol: holding.asset.symbol, quantity, averageCost },
   });
   revalidatePath(`/admin/kullanicilar/${userId}`);
+  revalidatePath("/admin/pozisyonlar");
   revalidatePath("/portfoy");
   return { success: quantity === 0 ? `${holding.asset.symbol} pozisyonu kapatıldı.` : `${holding.asset.symbol} pozisyonu güncellendi.` };
 }
@@ -323,10 +324,61 @@ export async function adminPlaceMarketOrderAction(_prev: AdminActionResult, form
       newValue: { onBehalfOfUserId: parsed.data.userId, symbol: asset.symbol, side: parsed.data.side, quantity: parsed.data.quantity },
     });
     revalidatePath(`/admin/kullanicilar/${parsed.data.userId}`);
+    revalidatePath("/admin/pozisyonlar");
     const verb = parsed.data.side === "BUY" ? "alındı" : "satıldı";
     return { success: `${trade.quantity.toString()} adet ${asset.symbol} ${verb}.` };
   } catch (err) {
     if (err instanceof TradingError) return { error: err.turkishMessage };
     throw err;
   }
+}
+
+/** Sells a holding down to zero at market price — the real "close this spot position" action
+ * (not the no-cash-movement quantity editor above), through the same engine a user's own close
+ * goes through. Used from the platform-wide /admin/pozisyonlar list. */
+export async function adminCloseHoldingAction(holdingId: string): Promise<AdminActionResult> {
+  const admin = await requireAdmin();
+  const holding = await prisma.holding.findUnique({
+    where: { id: holdingId },
+    select: { assetId: true, quantity: true, portfolio: { select: { userId: true } }, asset: { select: { symbol: true } } },
+  });
+  if (!holding) return { error: "Pozisyon bulunamadı." };
+
+  try {
+    const trade = await executeMarketOrder({
+      userId: holding.portfolio.userId,
+      assetId: holding.assetId,
+      side: "SELL",
+      quantity: holding.quantity.toString(),
+    });
+    await writeAuditLog({
+      adminUserId: admin.id,
+      action: "ORDER_EXECUTED",
+      entityType: "Order",
+      entityId: trade.orderId,
+      newValue: { closedHoldingId: holdingId, symbol: holding.asset.symbol, closedBy: "ADMIN" },
+    });
+    revalidatePath("/admin/pozisyonlar");
+    return { success: `${trade.quantity.toString()} adet ${holding.asset.symbol} satılarak pozisyon kapatıldı.` };
+  } catch (err) {
+    if (err instanceof TradingError) return { error: err.turkishMessage };
+    throw err;
+  }
+}
+
+/** Cancels any user's pending/open order — the admin equivalent of the user's own
+ * cancelOrderAction, for the platform-wide /admin/pozisyonlar list. */
+export async function adminCancelOrderAction(orderId: string): Promise<AdminActionResult> {
+  const admin = await requireAdmin();
+  const order = await prisma.order.findUnique({ where: { id: orderId }, select: { userId: true } });
+  if (!order) return { error: "Emir bulunamadı." };
+
+  try {
+    await cancelOrder(order.userId, orderId);
+  } catch {
+    return { error: "Emir iptal edilemedi (zaten tamamlanmış ya da iptal olmuş olabilir)." };
+  }
+  await writeAuditLog({ adminUserId: admin.id, action: "ORDER_CANCELLED", entityType: "Order", entityId: orderId });
+  revalidatePath("/admin/pozisyonlar");
+  return { success: "Emir iptal edildi." };
 }

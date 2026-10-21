@@ -35,6 +35,8 @@ export const MarketClosedError = (hours: string | null) =>
 export const InvalidLeverageError = (maxLeverage: number) =>
   new TradingError(`Kaldıraç 1 ile ${maxLeverage} arasında bir tam sayı olmalı.`);
 
+export const MinLotError = (minLot: number) => new TradingError(`Bu varlıkta en az ${minLot} lot alınabilir.`);
+
 export const PositionNotFoundError = () => new TradingError("Pozisyon bulunamadı.");
 
 export const PositionAlreadyClosedError = () => new TradingError("Bu pozisyon zaten kapatılmış.");

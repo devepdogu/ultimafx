@@ -7,7 +7,9 @@ import { prisma } from "@/lib/prisma/client";
 import { writeAuditLog } from "@/lib/audit/log";
 import { Decimal } from "@/lib/money/decimal";
 import { lockWallet } from "@/lib/trading/engine";
-import { closeLeveragedPosition, MAX_LEVERAGE } from "@/lib/trading/leverage-engine";
+import { closeLeveragedPosition } from "@/lib/trading/leverage-engine";
+import { MAX_LEVERAGE } from "@/lib/trading/leverage-constants";
+import { getLeverageConfig } from "@/lib/trading/leverage-config";
 import { TradingError } from "@/lib/trading/errors";
 import type { AdminActionResult } from "./content-actions";
 
@@ -50,9 +52,17 @@ export async function adminEditLeveragedPositionAction(_prev: AdminActionResult,
   });
   if (!parsed.success) return { error: "Geçersiz alanlar." };
 
-  const position = await prisma.leveragedPosition.findUnique({ where: { id: parsed.data.positionId } });
+  const position = await prisma.leveragedPosition.findUnique({ where: { id: parsed.data.positionId }, include: { asset: { select: { type: true } } } });
   if (!position) return { error: "Pozisyon bulunamadı." };
   if (position.status !== "OPEN") return { error: "Sadece açık pozisyonlar düzenlenebilir." };
+
+  const terms = await getLeverageConfig(position.asset.type);
+  if (parsed.data.leverage > terms.maxLeverage) {
+    return { error: `Bu varlık türü için kaldıraç en fazla 1:${terms.maxLeverage} olabilir.` };
+  }
+  if (parsed.data.quantity < terms.minLot) {
+    return { error: `Bu varlıkta en az ${terms.minLot} lot olmalı.` };
+  }
 
   const quantity = new Decimal(parsed.data.quantity);
   const entryPrice = new Decimal(parsed.data.entryPrice);

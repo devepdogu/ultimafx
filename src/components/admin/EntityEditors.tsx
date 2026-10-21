@@ -454,11 +454,16 @@ export interface TermValues {
   id?: string;
   currency: string;
   termDays: number;
+  label: string | null;
   annualRate: number;
+  rateMultiplier: number;
   minAmount: number;
   position: number;
 }
 
+/** annualRate is never an input here — it's always Faiz Konfigürasyonu's base rate ×
+ * rateMultiplier, shown read-only so admins can see what a term actually pays without being
+ * able to make it drift from that formula. See saveTermProductAction. */
 export function TermEditor({ product }: { product?: TermValues }) {
   return (
     <AdminActionForm action={saveTermProductAction} submitLabel={product ? "Değişiklikleri kaydet" : "Ürünü ekle"}>
@@ -473,8 +478,18 @@ export function TermEditor({ product }: { product?: TermValues }) {
         <AdminField label="Vade (gün)" hint="1 ile 3650 arası.">
           <input name="termDays" type="number" min={1} max={3650} required defaultValue={product?.termDays} className={ADMIN_INPUT} />
         </AdminField>
-        <AdminField label="Yıllık basit faiz (%)" hint="Örnek: 42.5">
-          <input name="annualRate" type="number" step="0.01" min={0} required defaultValue={product?.annualRate} className={ADMIN_INPUT} />
+        <AdminField label="Etiket" hint='Örnek: "7 Günlük". Boş bırakılırsa gün sayısı gösterilir.'>
+          <input name="label" defaultValue={product?.label ?? ""} className={ADMIN_INPUT} />
+        </AdminField>
+        <AdminField
+          label="Çarpan"
+          hint={
+            product
+              ? `Faiz Konfigürasyonu'ndaki taban orana uygulanır. Şu an: %${product.annualRate.toFixed(2)} yıllık.`
+              : "Faiz Konfigürasyonu'ndaki taban orana uygulanır (1 = taban oranın aynısı)."
+          }
+        >
+          <input name="rateMultiplier" type="number" step="0.0001" min="0.0001" required defaultValue={product?.rateMultiplier ?? 1} className={ADMIN_INPUT} />
         </AdminField>
         <AdminField label="Minimum tutar">
           <input name="minAmount" type="number" step="0.01" min={0} required defaultValue={product?.minAmount} className={ADMIN_INPUT} />

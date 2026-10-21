@@ -1,104 +1,101 @@
+import { CircleCheck, CircleX } from "lucide-react";
 import { prisma } from "@/lib/prisma/client";
-import { TermEditor } from "@/components/admin/EntityEditors";
-import { AdminFilters } from "@/components/admin/AdminFilters";
-import { AdminRecord, RecordActions } from "@/components/admin/AdminRecord";
-import { AdminEmpty, AdminPageHeader, AdminPanel, StatusPill } from "@/components/admin/AdminUi";
-import { DeleteButton } from "@/components/admin/DeleteButton";
-import { ToggleButton } from "@/components/admin/ContentForms";
-import { deleteTermProductAction } from "@/lib/admin/entity-actions";
-import { toggleTermDepositProductAction } from "@/lib/admin/term-deposit-actions";
+import { Link } from "@/i18n/navigation";
+import { getInterestConfig } from "@/lib/interest/config";
+import { AdminEmpty, AdminPageHeader, AdminPanel, AdminStatCard } from "@/components/admin/AdminUi";
+import { formatDateTime } from "@/lib/utils/format";
 
-export default async function AdminTermDepositsPage({ searchParams }: { searchParams: Promise<{ status?: string; currency?: string }> }) {
-  const { status = "", currency = "" } = await searchParams;
-  const products = await prisma.termDepositProduct.findMany({
-    where: {
-      ...(status === "active" ? { isActive: true } : status === "hidden" ? { isActive: false } : {}),
-      ...(currency === "TRY" || currency === "USD" ? { currency } : {}),
-    },
-    orderBy: [{ currency: "asc" }, { termDays: "asc" }],
-  });
+const num = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function userLabel(u: { name: string | null; phone: string | null }) {
+  return u.name ?? u.phone ?? "İsimsiz kullanıcı";
+}
+
+export default async function AdminInterestDashboardPage() {
+  const [config, active, settled] = await Promise.all([
+    getInterestConfig(),
+    prisma.termDepositAccount.findMany({
+      where: { status: "ACTIVE" },
+      include: { user: { select: { id: true, name: true, phone: true } } },
+      orderBy: { maturesAt: "asc" },
+      take: 100,
+    }),
+    prisma.termDepositAccount.findMany({
+      where: { status: "MATURED" },
+      include: { user: { select: { id: true, name: true, phone: true } } },
+      orderBy: { settledAt: "desc" },
+      take: 100,
+    }),
+  ]);
 
   return (
-    <div className="flex max-w-6xl flex-col gap-6">
-      <AdminPageHeader title="Vadeli Mevduat" description="Kullanıcıların açabildiği vadeli ürünler. Faiz basit faizle hesaplanır ve vade sonunda ana para ile birlikte hesaba döner." />
+    <div className="flex max-w-5xl flex-col gap-6">
+      <AdminPageHeader
+        title="Faiz Yönetimi"
+        description="Vadeli mevduat oranları + dağıtım kuralları."
+        actions={
+          <Link href="/admin/vadeli-mevduat/ayarlar" className="flex h-9 items-center rounded-lg bg-brand px-3 text-[12px] font-bold text-brand-foreground">
+            Faiz Konfigürasyonu
+          </Link>
+        }
+      />
 
-      <AdminPanel title="Yeni ürün ekle" description="Yayındaki bir ürünü değiştirirseniz mevcut hesaplar açıldıkları koşulla devam eder.">
-        <TermEditor />
-      </AdminPanel>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <AdminStatCard icon={CircleCheck} label="TRY (₺) Yıllık" value={`%${num.format(config.tryAnnualRate)}`} hint={`aylık ≈ %${num.format(config.tryAnnualRate / 12)}`} />
+        <AdminStatCard icon={CircleCheck} label="USDT ($) Yıllık" value={`%${num.format(config.usdAnnualRate)}`} hint={`aylık ≈ %${num.format(config.usdAnnualRate / 12)}`} />
+        <AdminStatCard
+          icon={config.autoDistribute ? CircleCheck : CircleX}
+          label="Otomatik Dağıtım"
+          value={config.autoDistribute ? "AÇIK" : "KAPALI"}
+          hint="vadesi dolanlar yatırılır"
+          tone={config.autoDistribute ? "neutral" : "warning"}
+        />
+      </div>
 
-      <AdminPanel title={`Ürünler (${products.length})`}>
-        <div className="flex flex-col gap-3">
-          <AdminFilters
-            q=""
-            status={status}
-            basePath="/admin/vadeli-mevduat"
-            statuses={[
-              { value: "active", label: "Satışta" },
-              { value: "hidden", label: "Satış dışı" },
-            ]}
-          />
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              { value: "", label: "Tüm para birimleri" },
-              { value: "TRY", label: "TL" },
-              { value: "USD", label: "USD" },
-            ].map((c) => (
-              <a
-                key={c.value || "all"}
-                href={`/admin/vadeli-mevduat?${new URLSearchParams({ ...(status ? { status } : {}), ...(c.value ? { currency: c.value } : {}) }).toString()}`}
-                className={
-                  (currency === c.value ? "border-foreground bg-foreground text-background" : "border-border text-foreground/70 hover:border-foreground/40") +
-                  " rounded-full border px-3 py-1.5 text-[12px] font-bold"
-                }
-              >
-                {c.label}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {products.length === 0 ? (
-          <AdminEmpty>Bu filtrelere uyan ürün yok.</AdminEmpty>
+      <AdminPanel title={`Aktif Vadeli Mevduatlar (${active.length})`}>
+        {active.length === 0 ? (
+          <AdminEmpty>Açık vadeli mevduat yok.</AdminEmpty>
         ) : (
           <div className="flex flex-col gap-2">
-            {products.map((p) => (
-              <AdminRecord
-                key={p.id}
-                summary={
-                  <div className="flex flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[14px] font-bold">
-                        {p.termDays} gün · {p.currency === "TRY" ? "TL" : "USD"}
-                      </span>
-                      {p.isActive ? <StatusPill tone="positive">Satışta</StatusPill> : <StatusPill tone="neutral">Satış dışı</StatusPill>}
-                    </div>
+            {active.map((a) => (
+              <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3.5">
+                <div className="flex flex-col gap-0.5">
+                  <Link href={`/admin/kullanicilar/${a.userId}`} className="text-[13px] font-bold text-brand">
+                    {userLabel(a.user)}
+                  </Link>
+                  <span className="num-tabular text-[12px] text-muted">
+                    {num.format(Number(a.principal))} {a.currency} · %{num.format(Number(a.annualRate))} yıllık · {a.termDays} gün
+                  </span>
+                </div>
+                <span className="text-[11px] text-muted">Vade: {formatDateTime(a.maturesAt.toISOString())}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminPanel>
+
+      <AdminPanel title="Dağıtılmış / Çekilmiş Yatırımlar">
+        {settled.length === 0 ? (
+          <AdminEmpty>Henüz vadesi dolmuş bir mevduat yok.</AdminEmpty>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {settled.map((a) => {
+              const principal = Number(a.principal);
+              const interest = Number(a.interest);
+              return (
+                <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3.5">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[13px] font-bold">{num.format(principal)} {a.currency}</span>
                     <span className="num-tabular text-[12px] text-muted">
-                      Yıllık %{Number(p.annualRate).toLocaleString("tr-TR")} · minimum {Number(p.minAmount).toLocaleString("tr-TR")} {p.currency}
+                      Kazanılan: +{num.format(interest)} | Toplam: {num.format(principal + interest)}
                     </span>
                   </div>
-                }
-                actions={
-                  <>
-                    <span className="text-[12px] text-muted">{p.isActive ? "Kullanıcılar bu ürünü açabilir." : "Yeni hesap açılamıyor."}</span>
-                    <RecordActions>
-                      <ToggleButton label={p.isActive ? "Satışı durdur" : "Satışa aç"} run={toggleTermDepositProductAction.bind(null, p.id)} />
-                      <DeleteButton label="Sil" confirmText="Bu ürün silinecek. Bu ürünle açılmış hesap varsa silme engellenir. Emin misiniz?" run={deleteTermProductAction.bind(null, p.id)} />
-                    </RecordActions>
-                  </>
-                }
-              >
-                <TermEditor
-                  product={{
-                    id: p.id,
-                    currency: p.currency,
-                    termDays: p.termDays,
-                    annualRate: Number(p.annualRate),
-                    minAmount: Number(p.minAmount),
-                    position: p.position,
-                  }}
-                />
-              </AdminRecord>
-            ))}
+                  <Link href={`/admin/kullanicilar/${a.userId}`} className="text-[12px] font-bold text-brand">
+                    ↩ {userLabel(a.user)}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         )}
       </AdminPanel>

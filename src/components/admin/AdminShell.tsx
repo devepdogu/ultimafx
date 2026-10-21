@@ -44,6 +44,7 @@ const NAV: NavGroup[] = [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
       { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: Users },
       { href: "/admin/pozisyonlar", label: "Emirler & Pozisyonlar", icon: TrendingUp },
+      { href: "/admin/kaldirac-yonetimi", label: "Kaldıraç Yönetimi", icon: Settings2 },
     ],
   },
   {
@@ -62,7 +63,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/admin/para-yatirma", label: "Para Yatırma", icon: Banknote },
       { href: "/admin/para-cekme", label: "Para Çekme", icon: Wallet },
-      { href: "/admin/vadeli-mevduat", label: "Vadeli Mevduat", icon: Landmark },
+      { href: "/admin/vadeli-mevduat", label: "Faiz Yönetimi", icon: Landmark },
       { href: "/admin/banka-hesaplari", label: "Banka Hesapları", icon: Building2 },
       { href: "/admin/kripto-adresleri", label: "Kripto Adresleri", icon: Bitcoin },
     ],

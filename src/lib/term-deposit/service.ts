@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { computeTermInterest } from "./interest";
+import { getInterestConfig } from "@/lib/interest/config";
 
 export class TermDepositError extends Error {}
 
@@ -35,6 +36,9 @@ function balanceField(currency: Currency) {
  * inside the same transaction as the credit, so running this repeatedly never pays twice.
  */
 export async function settleMaturedTermDeposits(userId: string): Promise<void> {
+  const { autoDistribute } = await getInterestConfig();
+  if (!autoDistribute) return; // Otomatik Dağıtım kapalıyken vadesi dolan hesap ACTIVE kalır.
+
   const due = await prisma.termDepositAccount.findMany({
     where: { userId, status: "ACTIVE", maturesAt: { lte: new Date() } },
     select: { id: true },

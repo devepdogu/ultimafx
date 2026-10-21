@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/rbac";
 import { resolveAssetPrice } from "@/lib/market-data/resolve-price";
 import type { PickerAsset } from "@/components/trading/AssetPicker";
 import { TradeTerminal, type TerminalLeveragedPosition, type TerminalOrder, type TerminalPosition } from "@/components/trading/TradeTerminal";
+import { getLeverageConfig } from "@/lib/trading/leverage-config";
 
 const DEFAULT_SYMBOL = "THYAO";
 
@@ -31,7 +32,7 @@ export default async function TradePage({
   }
 
   const asset = await prisma.asset.findUniqueOrThrow({ where: { id: target.id } });
-  const resolved = await resolveAssetPrice(asset);
+  const [resolved, leverageTerms] = await Promise.all([resolveAssetPrice(asset), getLeverageConfig(asset.type)]);
 
   let cashBalance = 0;
   let usdBalance = 0;
@@ -152,6 +153,7 @@ export default async function TradePage({
       heldQuantity={heldQuantity}
       positions={positions}
       leveragedPositions={leveragedPositions}
+      maxLeverage={leverageTerms.maxLeverage}
       orders={orders}
       loggedIn={!!user}
       pickerAssets={pickerAssets}

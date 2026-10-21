@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
 import { writeAuditLog } from "@/lib/audit/log";
 import { BANK_PRESETS, CRYPTO_NETWORK_PRESETS, IBAN_PATTERN } from "./presets";
+import { getInterestConfig } from "@/lib/interest/config";
 import type { AdminActionResult } from "./content-actions";
 
 /** Empty form fields arrive as "", which should mean "not set" rather than an invalid value. */
@@ -455,33 +456,48 @@ export async function deleteCryptoAction(id: string): Promise<AdminActionResult>
 const termSchema = z.object({
   currency: z.enum(["TRY", "USD"]),
   termDays: z.coerce.number().int("Vade tam gün olmalı.").min(1, "Vade en az 1 gün.").max(3650, "Vade en fazla 3650 gün."),
-  annualRate: z.coerce.number().min(0, "Faiz negatif olamaz.").max(1000),
+  label: z
+    .string()
+    .trim()
+    .max(40)
+    .transform((v) => v || null),
+  rateMultiplier: z.coerce.number().positive("Çarpan 0'dan büyük olmalı.").max(100),
   minAmount: z.coerce.number().min(0).max(1e12),
   position: z.coerce.number().int().min(0).max(1000),
 });
 
+/** annualRate is never taken from the form — it's always base rate(currency) × rateMultiplier,
+ * computed fresh here so it can never drift from Faiz Konfigürasyonu's own numbers. See
+ * src/lib/interest/config.ts. */
 export async function saveTermProductAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
   const admin = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const parsed = termSchema.safeParse({
     currency: formData.get("currency"),
     termDays: formData.get("termDays"),
-    annualRate: formData.get("annualRate"),
+    label: formData.get("label") ?? "",
+    rateMultiplier: formData.get("rateMultiplier") ?? "1",
     minAmount: formData.get("minAmount"),
     position: formData.get("position") ?? 0,
   });
   if (!parsed.success) return fail(parsed.error.issues[0], "Geçersiz vadeli mevduat alanları.");
 
+  const config = await getInterestConfig();
+  const annualRate = (parsed.data.currency === "USD" ? config.usdAnnualRate : config.tryAnnualRate) * parsed.data.rateMultiplier;
+  const data = { ...parsed.data, annualRate: annualRate.toFixed(4) };
+
   if (id) {
     if (!(await prisma.termDepositProduct.findUnique({ where: { id }, select: { id: true } }))) return { error: "Ürün bulunamadı." };
-    await prisma.termDepositProduct.update({ where: { id }, data: parsed.data });
-    await writeAuditLog({ adminUserId: admin.id, action: "TERM_DEPOSIT_UPDATED", entityType: "TermDepositProduct", entityId: id, newValue: parsed.data });
+    await prisma.termDepositProduct.update({ where: { id }, data });
+    await writeAuditLog({ adminUserId: admin.id, action: "TERM_DEPOSIT_UPDATED", entityType: "TermDepositProduct", entityId: id, newValue: data });
     revalidatePath("/cuzdan/vadeli-mevduat");
+    revalidatePath("/admin/vadeli-mevduat");
     return { success: "Ürün güncellendi. Mevcut hesaplar açıldığı koşulla devam eder." };
   }
-  const created = await prisma.termDepositProduct.create({ data: { ...parsed.data, isActive: true } });
-  await writeAuditLog({ adminUserId: admin.id, action: "TERM_DEPOSIT_CREATED", entityType: "TermDepositProduct", entityId: created.id, newValue: parsed.data });
+  const created = await prisma.termDepositProduct.create({ data: { ...data, isActive: true } });
+  await writeAuditLog({ adminUserId: admin.id, action: "TERM_DEPOSIT_CREATED", entityType: "TermDepositProduct", entityId: created.id, newValue: data });
   revalidatePath("/cuzdan/vadeli-mevduat");
+  revalidatePath("/admin/vadeli-mevduat");
   return { success: "Vadeli mevduat ürünü eklendi." };
 }
 

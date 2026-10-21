@@ -6,6 +6,7 @@ import { resolveAssetPrice } from "@/lib/market-data/resolve-price";
 import { isAssetSessionOpen, sessionHoursLabel } from "./session";
 import { ensureWalletAndPortfolio, lockWallet } from "./engine";
 import { MAX_LEVERAGE } from "./leverage-constants";
+import { getLeverageConfig } from "./leverage-config";
 import {
   AssetNotTradableError,
   InsufficientBalanceError,
@@ -13,6 +14,7 @@ import {
   InvalidLeverageError,
   InvalidQuantityError,
   MarketClosedError,
+  MinLotError,
   PositionAlreadyClosedError,
   PositionNotFoundError,
   PriceUnavailableError,
@@ -65,10 +67,14 @@ export async function openLeveragedPosition(input: OpenLeveragedPositionInput) {
   if (!asset.isActive || !asset.tradingEnabled) throw AssetNotTradableError();
   if (!isAssetSessionOpen(asset.type)) throw MarketClosedError(sessionHoursLabel(asset.type));
 
+  const terms = await getLeverageConfig(asset.type);
+  if (input.leverage > terms.maxLeverage) throw InvalidLeverageError(terms.maxLeverage);
+  if (quantity.lt(terms.minLot)) throw MinLotError(terms.minLot);
+
   const resolved = await resolveAssetPrice(asset);
   if (resolved.price == null || resolved.provenance === "UNAVAILABLE") throw PriceUnavailableError();
   const price = new Decimal(resolved.price);
-  const contractSize = new Decimal(1);
+  const contractSize = new Decimal(terms.contractSize);
   const margin = notional(quantity, price, contractSize).dividedBy(input.leverage);
 
   await ensureWalletAndPortfolio(input.userId);

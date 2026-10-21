@@ -582,32 +582,67 @@ async function main() {
   }
   console.log(`Seeded ${cryptoIds.length} crypto assets${cryptoLogos.size > 0 ? " with live names/logos" : " (CoinGecko unreachable — names/logos not updated this run)"}.`);
 
-  // TRY term deposit products. Existing rows are left untouched; only missing terms are created,
-  // so admin-edited rates survive re-running the seed. Rates for new terms are placeholders to review in /admin.
-  // Term deposit products per currency. Existing rows are left untouched; only missing
-  // (currency, term) pairs are created, so admin-edited rates survive re-running the seed.
-  // Rates for terms not set in /admin are placeholders to review.
-  const TERM_DEPOSIT_PRODUCTS: { currency: "TRY" | "USD"; termDays: number; annualRate: string; minAmount: string }[] = [
-    { currency: "TRY", termDays: 1, annualRate: "1.5000", minAmount: "10000" },
-    { currency: "TRY", termDays: 7, annualRate: "2.0000", minAmount: "10000" },
-    { currency: "TRY", termDays: 15, annualRate: "4.0000", minAmount: "25000" },
-    { currency: "TRY", termDays: 30, annualRate: "3.0000", minAmount: "10000" },
-    { currency: "TRY", termDays: 90, annualRate: "3.5000", minAmount: "10000" },
-    { currency: "TRY", termDays: 180, annualRate: "3.7500", minAmount: "10000" },
-    { currency: "USD", termDays: 1, annualRate: "0.5000", minAmount: "100" },
-    { currency: "USD", termDays: 7, annualRate: "1.0000", minAmount: "100" },
-    { currency: "USD", termDays: 15, annualRate: "1.5000", minAmount: "100" },
-    { currency: "USD", termDays: 30, annualRate: "2.0000", minAmount: "100" },
-    { currency: "USD", termDays: 90, annualRate: "2.5000", minAmount: "100" },
-    { currency: "USD", termDays: 180, annualRate: "3.0000", minAmount: "100" },
+  // Faiz Konfigürasyonu's base annual rates — every term product's own rate is this × its
+  // rateMultiplier (see recomputeTermProductRates()). Upserted, never overwritten on re-seed.
+  const interestConfig = await prisma.interestConfig.upsert({
+    where: { id: "default" },
+    update: {},
+    create: { id: "default", tryAnnualRate: "50", usdAnnualRate: "6", autoDistribute: true, earlyWithdrawalPenaltyPercent: "50" },
+  });
+
+  // Term deposit products per currency. Existing (currency, term) rows are left untouched
+  // (admin edits survive re-running the seed) — only missing pairs are created, with a rate
+  // computed from the base rate above × this term's multiplier.
+  const TERM_OPTIONS: { termDays: number; label: string; multiplier: string; minAmountTRY: string; minAmountUSD: string }[] = [
+    { termDays: 1, label: "1 Günlük", multiplier: "0.85", minAmountTRY: "100", minAmountUSD: "100" },
+    { termDays: 7, label: "7 Günlük", multiplier: "0.95", minAmountTRY: "500", minAmountUSD: "100" },
+    { termDays: 15, label: "15 Günlük", multiplier: "1", minAmountTRY: "1000", minAmountUSD: "100" },
+    { termDays: 30, label: "30 Günlük", multiplier: "1.05", minAmountTRY: "2500", minAmountUSD: "100" },
+    { termDays: 90, label: "90 Günlük", multiplier: "1.15", minAmountTRY: "10000", minAmountUSD: "100" },
+    { termDays: 180, label: "180 Günlük", multiplier: "1.25", minAmountTRY: "25000", minAmountUSD: "100" },
   ];
-  for (const [position, term] of TERM_DEPOSIT_PRODUCTS.entries()) {
-    const existing = await prisma.termDepositProduct.findFirst({ where: { currency: term.currency, termDays: term.termDays } });
-    if (!existing) {
-      await prisma.termDepositProduct.create({
-        data: { currency: term.currency, termDays: term.termDays, annualRate: term.annualRate, minAmount: term.minAmount, position, isActive: true },
-      });
+  let position = 0;
+  for (const currency of ["TRY", "USD"] as const) {
+    const baseRate = currency === "TRY" ? Number(interestConfig.tryAnnualRate) : Number(interestConfig.usdAnnualRate);
+    for (const term of TERM_OPTIONS) {
+      const existing = await prisma.termDepositProduct.findFirst({ where: { currency, termDays: term.termDays } });
+      if (!existing) {
+        await prisma.termDepositProduct.create({
+          data: {
+            currency,
+            termDays: term.termDays,
+            label: term.label,
+            rateMultiplier: term.multiplier,
+            annualRate: (baseRate * Number(term.multiplier)).toFixed(4),
+            minAmount: currency === "TRY" ? term.minAmountTRY : term.minAmountUSD,
+            position: position++,
+            isActive: true,
+          },
+        });
+      }
     }
+  }
+
+  // Per-asset-class leveraged-trading terms (see prisma/schema.prisma's LeverageConfig doc
+  // comment) — one row per AssetType, upserted so re-seeding never resets an admin's edits.
+  const LEVERAGE_CONFIGS: Record<
+    "STOCK" | "US_STOCK" | "COMMODITY" | "INDEX" | "CURRENCY" | "CRYPTO" | "FUND",
+    { maxLeverage: number; contractSize: string; minLot: string; spreadPercent: string; longSwap: string; shortSwap: string }
+  > = {
+    STOCK: { maxLeverage: 10, contractSize: "1", minLot: "1", spreadPercent: "500", longSwap: "-12.5", shortSwap: "8.3" },
+    US_STOCK: { maxLeverage: 20, contractSize: "1", minLot: "0.01", spreadPercent: "1500", longSwap: "-8.2", shortSwap: "4.1" },
+    COMMODITY: { maxLeverage: 100, contractSize: "100", minLot: "0.01", spreadPercent: "1300", longSwap: "-69", shortSwap: "38" },
+    INDEX: { maxLeverage: 100, contractSize: "1", minLot: "0.1", spreadPercent: "5000", longSwap: "-15", shortSwap: "7.5" },
+    CURRENCY: { maxLeverage: 500, contractSize: "100000", minLot: "0.01", spreadPercent: "120", longSwap: "-3.5", shortSwap: "1.8" },
+    CRYPTO: { maxLeverage: 50, contractSize: "1", minLot: "0.01", spreadPercent: "0", longSwap: "-25", shortSwap: "12.5" },
+    FUND: { maxLeverage: 1, contractSize: "1", minLot: "0.01", spreadPercent: "0", longSwap: "0", shortSwap: "0" },
+  };
+  for (const [type, cfg] of Object.entries(LEVERAGE_CONFIGS)) {
+    await prisma.leverageConfig.upsert({
+      where: { type: type as keyof typeof LEVERAGE_CONFIGS },
+      update: {},
+      create: { type: type as keyof typeof LEVERAGE_CONFIGS, ...cfg },
+    });
   }
 
   // Login accepts T.C. or phone only, so the admin is identified by phone (ADMIN_PHONE, 5XXXXXXXXX).

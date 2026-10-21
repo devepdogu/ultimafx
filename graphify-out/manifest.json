@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
-    "mtime": 1792533956.0710983,
-    "seen": 1792534173.9743152,
-    "ast_hash": "febafb8bd77d64a443a145c75c5337ad",
+    "mtime": 1792619131.8089497,
+    "seen": 1792619286.8597057,
+    "ast_hash": "79644cc737f3fe5a6661c4cfd5a54f33",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/cuzdan/page.tsx": {
@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/emirler/page.tsx": {
-    "mtime": 1792594587.7362194,
-    "seen": 1792594627.266451,
-    "ast_hash": "e131a984c4ccf44ece52f941eb433b91",
+    "mtime": 1792596885.9584284,
+    "seen": 1792619286.8603559,
+    "ast_hash": "fe4669e0e003a2ae1af92da9316e04e0",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/haberler/page.tsx": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "src/lib/trading/errors.ts": {
-    "mtime": 1792594111.8733869,
-    "seen": 1792594627.2798474,
-    "ast_hash": "cf613b463b2f19485dda7802a9ea98c6",
+    "mtime": 1792596769.5472243,
+    "seen": 1792619286.8747704,
+    "ast_hash": "8101a33f39f02373f404a84aee52b00f",
     "semantic_hash": ""
   },
   "src/lib/trading/schemas.ts": {
@@ -1788,9 +1788,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/vadeli-mevduat/page.tsx": {
-    "mtime": 1791319843.3339036,
-    "seen": 1791319938.1581113,
-    "ast_hash": "4deaf978a70bc45c0cef5f0ef980224b",
+    "mtime": 1792619035.9114964,
+    "seen": 1792619286.8631964,
+    "ast_hash": "c56c5b0a638adf60e3445b57b1780b2f",
     "semantic_hash": ""
   },
   "src/lib/admin/term-deposit-actions.ts": {
@@ -1818,9 +1818,9 @@
     "semantic_hash": ""
   },
   "src/lib/term-deposit/service.ts": {
-    "mtime": 1791304352.3770914,
-    "seen": 1791304516.1202636,
-    "ast_hash": "b595fa58da7aaf8aca2a2a4eb111e401",
+    "mtime": 1792619083.320737,
+    "seen": 1792619286.87462,
+    "ast_hash": "9f162a9a38deea4632bd8d096873fce1",
     "semantic_hash": ""
   },
   "src/components/trading/AssetPicker.tsx": {
@@ -1830,9 +1830,9 @@
     "semantic_hash": ""
   },
   "src/components/trading/TradeTerminal.tsx": {
-    "mtime": 1792594562.5335877,
-    "seen": 1792594627.2734308,
-    "ast_hash": "fdacfe257fde871fc7b4b69c0fd278e9",
+    "mtime": 1792596865.030003,
+    "seen": 1792619286.867906,
+    "ast_hash": "2bffc044dc136cb043af46172badc92b",
     "semantic_hash": ""
   },
   "src/components/ui/Toaster.tsx": {
@@ -2070,9 +2070,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/[id]/page.tsx": {
-    "mtime": 1792593796.3334968,
-    "seen": 1792594627.2685006,
-    "ast_hash": "efc999a3ba00fcd58572531575248c21",
+    "mtime": 1792597073.1265242,
+    "seen": 1792619286.8625124,
+    "ast_hash": "1db9e0165b53fae9847f1a7b1171c4a1",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/page.tsx": {
@@ -2100,9 +2100,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/AdminShell.tsx": {
-    "mtime": 1792594383.3051205,
-    "seen": 1792594627.2695978,
-    "ast_hash": "6fd35166256d5f1bb17403550e05b442",
+    "mtime": 1792619090.8830695,
+    "seen": 1792619286.86384,
+    "ast_hash": "7c4256ec0941f11d1280ad0cde8d98a6",
     "semantic_hash": ""
   },
   "src/components/admin/AdminUi.tsx": {
@@ -2166,9 +2166,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/user-actions.ts": {
-    "mtime": 1792593760.7905357,
-    "seen": 1792594627.2761216,
-    "ast_hash": "e2f2373ed490b38a6827c75e19c5bc2e",
+    "mtime": 1792596571.063938,
+    "seen": 1792619286.8705966,
+    "ast_hash": "056d19857faa9674e30278e69dcae5bd",
     "semantic_hash": ""
   },
   "src/lib/admin/user-status.ts": {
@@ -2196,9 +2196,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/EntityEditors.tsx": {
-    "mtime": 1792533547.177874,
-    "seen": 1792534173.9847786,
-    "ast_hash": "e99549a1d51b5b3451024b8233692471",
+    "mtime": 1792597225.216978,
+    "seen": 1792619286.8642652,
+    "ast_hash": "9412dbc3ffff5974faaecdf9cc0ecacf",
     "semantic_hash": ""
   },
   "src/components/admin/ProviderBadge.tsx": {
@@ -2208,9 +2208,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/entity-actions.ts": {
-    "mtime": 1792533511.8194103,
-    "seen": 1792534174.0052187,
-    "ast_hash": "db11bc7d05198eb8e6caf47e7031dc54",
+    "mtime": 1792597204.9876893,
+    "seen": 1792619286.8702288,
+    "ast_hash": "9d0c607b6f4262eb9b1e965d0374d61e",
     "semantic_hash": ""
   },
   "src/lib/admin/presets.ts": {
@@ -2472,9 +2472,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/pozisyonlar/page.tsx": {
-    "mtime": 1792594360.8337576,
-    "seen": 1792594627.2688673,
-    "ast_hash": "a476605aced68da6ffdd87c1b781862c",
+    "mtime": 1792596626.030287,
+    "seen": 1792619286.863063,
+    "ast_hash": "93ca5716677ec8bb4c8bb32603948793",
     "semantic_hash": ""
   },
   "src/components/admin/AutoRefresh.tsx": {
@@ -2490,9 +2490,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/leverage-actions.ts": {
-    "mtime": 1792594255.01021,
-    "seen": 1792594627.275914,
-    "ast_hash": "b7d4974ef1c81d32b2258a10ab9c5bbb",
+    "mtime": 1792596784.3407235,
+    "seen": 1792619286.8703785,
+    "ast_hash": "ea37c756f28dac3d7bded5a8013345d0",
     "semantic_hash": ""
   },
   "src/lib/trading/leverage-actions.ts": {
@@ -2502,15 +2502,51 @@
     "semantic_hash": ""
   },
   "src/lib/trading/leverage-constants.ts": {
-    "mtime": 1792594427.4519038,
-    "seen": 1792594627.2798505,
-    "ast_hash": "f5f43e45dda02df97a824fddfa7f2c19",
+    "mtime": 1792596749.8310595,
+    "seen": 1792619286.8748455,
+    "ast_hash": "4317aa9ee22abcd7813a4bd46be94d3b",
     "semantic_hash": ""
   },
   "src/lib/trading/leverage-engine.ts": {
-    "mtime": 1792594443.5002527,
-    "seen": 1792594627.2798514,
-    "ast_hash": "22e9393014637ab75feebb762d4906dd",
+    "mtime": 1792596763.8388183,
+    "seen": 1792619286.874847,
+    "ast_hash": "c9fa78d2ed739f2a2bc478c554599711",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/kaldirac-yonetimi/page.tsx": {
+    "mtime": 1792596929.887287,
+    "seen": 1792619286.8623471,
+    "ast_hash": "07cb5adabf4e8c1e712dbbbf6bf45207",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/vadeli-mevduat/ayarlar/page.tsx": {
+    "mtime": 1792619065.0742004,
+    "seen": 1792619286.8631945,
+    "ast_hash": "b90be9c6d4eb567762ce5eaf67c031da",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/interest-config-actions.ts": {
+    "mtime": 1792597181.7619667,
+    "seen": 1792619286.870376,
+    "ast_hash": "e72e591832912ac7e21bd0ef85baa0a9",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/leverage-config-actions.ts": {
+    "mtime": 1792596794.405171,
+    "seen": 1792619286.8703797,
+    "ast_hash": "5b8b39536ae770cc7bb2ef61cce12163",
+    "semantic_hash": ""
+  },
+  "src/lib/interest/config.ts": {
+    "mtime": 1792597172.2457557,
+    "seen": 1792619286.871708,
+    "ast_hash": "e5d397b0b4f9d43fc82737a349bf0303",
+    "semantic_hash": ""
+  },
+  "src/lib/trading/leverage-config.ts": {
+    "mtime": 1792596741.075709,
+    "seen": 1792619286.8748434,
+    "ast_hash": "1ee0d770e2b991cf30c66add7a1117e5",
     "semantic_hash": ""
   }
 }
