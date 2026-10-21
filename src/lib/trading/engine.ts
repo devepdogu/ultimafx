@@ -132,14 +132,14 @@ async function settleTrade(
  * ledger integrity risk: it never fabricates a balance, it just creates
  * the container a trade needs to settle into.
  */
-async function ensureWalletAndPortfolio(userId: string) {
+export async function ensureWalletAndPortfolio(userId: string) {
   await Promise.all([
     prisma.wallet.upsert({ where: { userId }, update: {}, create: { userId } }),
     prisma.portfolio.upsert({ where: { userId }, update: {}, create: { userId } }),
   ]);
 }
 
-async function lockWallet(tx: Prisma.TransactionClient, userId: string) {
+export async function lockWallet(tx: Prisma.TransactionClient, userId: string) {
   const rows = await tx.$queryRaw<{ id: string; cashBalance: Prisma.Decimal; usdBalance: Prisma.Decimal }[]>`
     SELECT id, "cashBalance", "usdBalance" FROM "Wallet" WHERE "userId" = ${userId} FOR UPDATE
   `;

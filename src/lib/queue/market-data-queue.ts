@@ -36,4 +36,12 @@ export async function scheduleMarketDataRefresh() {
       opts: { removeOnComplete: 10, removeOnFail: 10 },
     }
   );
+  await marketDataQueue.upsertJobScheduler(
+    "evaluate-leveraged-positions-scheduler",
+    { every: 15 * 1000 }, // margin can erode fast under high leverage — check often
+    {
+      name: "evaluate-leveraged-positions",
+      opts: { removeOnComplete: 10, removeOnFail: 10 },
+    }
+  );
 }

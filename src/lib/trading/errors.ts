@@ -31,3 +31,10 @@ export const MarketClosedError = (hours: string | null) =>
       ? `Piyasa şu anda kapalı. Bu varlıkta emir yalnızca seans saatlerinde verilebilir: ${hours}.`
       : "Piyasa şu anda kapalı."
   );
+
+export const InvalidLeverageError = (maxLeverage: number) =>
+  new TradingError(`Kaldıraç 1 ile ${maxLeverage} arasında bir tam sayı olmalı.`);
+
+export const PositionNotFoundError = () => new TradingError("Pozisyon bulunamadı.");
+
+export const PositionAlreadyClosedError = () => new TradingError("Bu pozisyon zaten kapatılmış.");

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma/client";
 import { getCurrentUser } from "@/lib/auth/rbac";
 import { resolveAssetPrice } from "@/lib/market-data/resolve-price";
 import type { PickerAsset } from "@/components/trading/AssetPicker";
-import { TradeTerminal, type TerminalOrder, type TerminalPosition } from "@/components/trading/TradeTerminal";
+import { TradeTerminal, type TerminalLeveragedPosition, type TerminalOrder, type TerminalPosition } from "@/components/trading/TradeTerminal";
 
 const DEFAULT_SYMBOL = "THYAO";
 
@@ -38,9 +38,10 @@ export default async function TradePage({
   let heldQuantity = 0;
   let positions: TerminalPosition[] = [];
   let orders: TerminalOrder[] = [];
+  let leveragedPositions: TerminalLeveragedPosition[] = [];
 
   if (user) {
-    const [wallet, portfolio, userOrders] = await Promise.all([
+    const [wallet, portfolio, userOrders, openLeveraged] = await Promise.all([
       prisma.wallet.findUnique({ where: { userId: user.id } }),
       prisma.portfolio.findUnique({
         where: { userId: user.id },
@@ -51,6 +52,11 @@ export default async function TradePage({
         include: { asset: true },
         orderBy: { placedAt: "desc" },
         take: 50,
+      }),
+      prisma.leveragedPosition.findMany({
+        where: { userId: user.id, status: "OPEN" },
+        include: { asset: true },
+        orderBy: { openedAt: "desc" },
       }),
     ]);
     cashBalance = wallet ? Number(wallet.cashBalance) : 0;
@@ -86,6 +92,34 @@ export default async function TradePage({
       limitPrice: o.limitPrice != null ? Number(o.limitPrice) : null,
       status: o.status,
     }));
+
+    leveragedPositions = await Promise.all(
+      openLeveraged.map(async (p) => {
+        const currentPrice = p.assetId === asset.id ? resolved.price : (await resolveAssetPrice(p.asset)).price;
+        const entryPrice = Number(p.entryPrice);
+        const quantity = Number(p.quantity);
+        const contractSize = Number(p.contractSize);
+        const pnl =
+          currentPrice != null
+            ? (p.side === "BUY" ? currentPrice - entryPrice : entryPrice - currentPrice) * quantity * contractSize
+            : null;
+        return {
+          id: p.id,
+          assetId: p.assetId,
+          symbol: p.asset.symbol,
+          type: p.asset.type,
+          logoUrl: p.asset.logoUrl,
+          currency: p.currency,
+          side: p.side,
+          quantity,
+          entryPrice,
+          leverage: p.leverage,
+          margin: Number(p.margin),
+          currentPrice,
+          pnl,
+        };
+      })
+    );
   }
 
   const pickerAssets: PickerAsset[] = pickerRows.map((r) => ({
@@ -117,6 +151,7 @@ export default async function TradePage({
       balanceCurrency={asset.currency === "USD" ? "USD" : "TRY"}
       heldQuantity={heldQuantity}
       positions={positions}
+      leveragedPositions={leveragedPositions}
       orders={orders}
       loggedIn={!!user}
       pickerAssets={pickerAssets}

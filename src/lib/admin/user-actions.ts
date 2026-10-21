@@ -7,6 +7,8 @@ import { requireAdmin } from "@/lib/auth/rbac";
 import { prisma } from "@/lib/prisma/client";
 import { writeAuditLog } from "@/lib/audit/log";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
+import { executeMarketOrder } from "@/lib/trading/engine";
+import { TradingError } from "@/lib/trading/errors";
 import type { AdminActionResult } from "./content-actions";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -224,9 +226,8 @@ const newPasswordSchema = z
   .refine((v) => v.newPassword === v.confirmPassword, { message: "Şifreler eşleşmiyor.", path: ["confirmPassword"] });
 
 /**
- * Sets a new password for a user. We never store or display the actual password (only its bcrypt
- * hash exists, and showing a hash has no legitimate use and is a needless exposure) — this is the
- * real admin equivalent of "see/change the password": reset it to a new one the admin chooses.
+ * Sets a new password for a user — used when a user is locked out, or an admin wants to
+ * replace the password outright rather than just viewing it (see revealUserPasswordAction).
  */
 export async function setUserPasswordAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
   const admin = await requireAdmin();
@@ -251,17 +252,81 @@ export async function setUserPasswordAction(_prev: AdminActionResult, formData: 
 /** Decrypts and returns a user's current password, for an admin who explicitly asks to see it
  * (a deliberate click, never shown by default) — see secret-box.ts and the User.passwordEncrypted
  * doc comment for why this is reversible encryption, not the bcrypt hash login checks against. */
-export async function revealUserPasswordAction(userId: string): Promise<{ password: string | null; error?: string }> {
+export async function revealUserPasswordAction(userId: string): Promise<{ value: string | null; error?: string }> {
   const admin = await requireAdmin();
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, passwordEncrypted: true } });
-  if (!user) return { password: null, error: "Kullanıcı bulunamadı." };
+  if (!user) return { value: null, error: "Kullanıcı bulunamadı." };
   if (!user.passwordEncrypted) {
-    return { password: null, error: "Bu kullanıcı bu özellik eklendikten sonra hiç şifre değiştirmedi, şifre görüntülenemiyor." };
+    return { value: null, error: "Bu kullanıcı bu özellik eklendikten sonra hiç şifre değiştirmedi, şifre görüntülenemiyor." };
   }
   await writeAuditLog({ adminUserId: admin.id, action: "USER_PASSWORD_VIEWED", entityType: "User", entityId: user.id });
   try {
-    return { password: decryptSecret(user.passwordEncrypted) };
+    return { value: decryptSecret(user.passwordEncrypted) };
   } catch {
-    return { password: null, error: "Şifre çözülemedi." };
+    return { value: null, error: "Şifre çözülemedi." };
+  }
+}
+
+/** Decrypts and returns a user's T.C. Kimlik No, for an admin who explicitly asks to see it —
+ * see User.tcKimlikEncrypted's doc comment. More sensitive than a password (it can't be reset
+ * if ever leaked), so every view is audit-logged same as the password one. */
+export async function revealUserTcKimlikAction(userId: string): Promise<{ value: string | null; error?: string }> {
+  const admin = await requireAdmin();
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, tcKimlikEncrypted: true } });
+  if (!user) return { value: null, error: "Kullanıcı bulunamadı." };
+  if (!user.tcKimlikEncrypted) {
+    return { value: null, error: "Bu kullanıcı için T.C. Kimlik No girilmemiş veya bu özellik eklenmeden önce kayıt olmuş." };
+  }
+  await writeAuditLog({ adminUserId: admin.id, action: "USER_TCKIMLIK_VIEWED", entityType: "User", entityId: user.id });
+  try {
+    return { value: decryptSecret(user.tcKimlikEncrypted) };
+  } catch {
+    return { value: null, error: "Çözülemedi." };
+  }
+}
+
+const adminOrderSchema = z.object({
+  userId: z.string().min(1),
+  symbol: z.string().trim().toUpperCase().min(1).max(20),
+  side: z.enum(["BUY", "SELL"]),
+  quantity: z.coerce.number().positive().max(1_000_000_000),
+});
+
+/** Places a real market order on a user's own wallet/portfolio, through the exact same
+ * `executeMarketOrder` engine a user's own trade goes through — not a fabricated holding edit.
+ * For when a user asks support to open or close a position for them. */
+export async function adminPlaceMarketOrderAction(_prev: AdminActionResult, formData: FormData): Promise<AdminActionResult> {
+  const admin = await requireAdmin();
+  const parsed = adminOrderSchema.safeParse({
+    userId: formData.get("userId"),
+    symbol: formData.get("symbol"),
+    side: formData.get("side"),
+    quantity: formData.get("quantity"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Geçersiz alanlar." };
+
+  const asset = await prisma.asset.findUnique({ where: { symbol: parsed.data.symbol } });
+  if (!asset) return { error: `"${parsed.data.symbol}" sembolünde bir varlık bulunamadı.` };
+
+  try {
+    const trade = await executeMarketOrder({
+      userId: parsed.data.userId,
+      assetId: asset.id,
+      side: parsed.data.side,
+      quantity: parsed.data.quantity,
+    });
+    await writeAuditLog({
+      adminUserId: admin.id,
+      action: "ORDER_EXECUTED",
+      entityType: "Order",
+      entityId: trade.orderId,
+      newValue: { onBehalfOfUserId: parsed.data.userId, symbol: asset.symbol, side: parsed.data.side, quantity: parsed.data.quantity },
+    });
+    revalidatePath(`/admin/kullanicilar/${parsed.data.userId}`);
+    const verb = parsed.data.side === "BUY" ? "alındı" : "satıldı";
+    return { success: `${trade.quantity.toString()} adet ${asset.symbol} ${verb}.` };
+  } catch (err) {
+    if (err instanceof TradingError) return { error: err.turkishMessage };
+    throw err;
   }
 }

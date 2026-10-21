@@ -15,6 +15,7 @@ import {
   PieChart,
   Rocket,
   Settings2,
+  TrendingUp,
   Trophy,
   Users,
   Wallet,
@@ -42,6 +43,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
       { href: "/admin/kullanicilar", label: "Kullanıcılar", icon: Users },
+      { href: "/admin/pozisyonlar", label: "Emirler & Pozisyonlar", icon: TrendingUp },
     ],
   },
   {

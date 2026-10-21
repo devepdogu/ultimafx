@@ -160,6 +160,11 @@ enum WalletTransactionType {
   FUND_PURCHASE
   /// Units sold back from an investment fund; cash credited at the unit price.
   FUND_REDEMPTION
+  /// Margin reserved from cash when a leveraged position opens.
+  LEVERAGE_OPEN
+  /// Margin plus realized P&L credited back when a leveraged position closes (by the user, an
+  /// admin, or automatic liquidation).
+  LEVERAGE_CLOSE
 }
 
 enum TermDepositStatus {
@@ -240,31 +245,35 @@ enum BankAccountStatus {
 // =========================================================================
 
 model User {
-  id              String     @id @default(cuid())
-  email           String?    @unique
-  emailVerified   DateTime?
-  phone           String?    @unique
-  tcKimlikHash    String?    @unique
-  termsAcceptedAt DateTime?
-  kvkkAcceptedAt  DateTime?
-  passwordHash    String?
+  id                String     @id @default(cuid())
+  email             String?    @unique
+  emailVerified     DateTime?
+  phone             String?    @unique
+  tcKimlikHash      String?    @unique
+  /// Reversibly encrypted (AES-256-GCM, see secret-box.ts) copy of the T.C. Kimlik No, so an
+  /// admin can view it on request — separate from tcKimlikHash, a one-way keyed hash used only
+  /// to look the account up at login. Null for any account that predates this field.
+  tcKimlikEncrypted String?
+  termsAcceptedAt   DateTime?
+  kvkkAcceptedAt    DateTime?
+  passwordHash      String?
   /// Reversibly encrypted (AES-256-GCM, see secret-box.ts) copy of the current password, so an
   /// admin can view it on request — separate from passwordHash, which stays a one-way bcrypt
   /// hash and is what login actually checks against. Null for any account whose password
   /// predates this field (nothing to view until it's next changed).
   passwordEncrypted String?
-  name            String?
-  image           String?
-  gender          String?
-  birthDate       DateTime?
-  city            String?
-  country         String?
-  locale          String     @default("tr")
-  referralCode    String?    @unique
-  referredById    String?
-  status          UserStatus @default(PENDING_VERIFICATION)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  name              String?
+  image             String?
+  gender            String?
+  birthDate         DateTime?
+  city              String?
+  country           String?
+  locale            String     @default("tr")
+  referralCode      String?    @unique
+  referredById      String?
+  status            UserStatus @default(PENDING_VERIFICATION)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   roles        UserRole[]
   fundHoldings FundHolding[]
@@ -279,6 +288,7 @@ model User {
   priceAlerts          PriceAlert[]
   orders               Order[]
   trades               Trade[]
+  leveragedPositions   LeveragedPosition[]
   notifications        Notification[]
   deposits             Deposit[]
   withdrawals          Withdrawal[]
@@ -462,27 +472,28 @@ model Asset {
   manualChange          Decimal? @db.Decimal(20, 6)
   manualChangePercent   Decimal? @db.Decimal(10, 4)
   /// Admin-set reference price the simulated walk is anchored to (the band's center).
-  manualBasePrice   Decimal? @db.Decimal(20, 6)
+  manualBasePrice       Decimal? @db.Decimal(20, 6)
   /// Max allowed drift from manualBasePrice, as a percent (e.g. 5 = ±5%). Worker-driven
   /// random walk never pushes manualPrice outside [basePrice*(1-p/100), basePrice*(1+p/100)].
-  manualBandPercent Decimal? @db.Decimal(6, 2)
+  manualBandPercent     Decimal? @db.Decimal(6, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  indexMemberships IndexConstituent[]
-  fund             Fund?
-  dividends        Dividend[]
-  corporateActions CorporateAction[]
-  kapDisclosures   KAPDisclosure[]
-  ipo              IPO?
-  holdings         Holding[]
-  watchlistItems   WatchlistItem[]
-  priceAlerts      PriceAlert[]
-  orders           Order[]
-  trades           Trade[]
-  newsArticles     NewsArticleAsset[]
-  calendarEvents   MarketCalendar[]
+  indexMemberships   IndexConstituent[]
+  fund               Fund?
+  dividends          Dividend[]
+  corporateActions   CorporateAction[]
+  kapDisclosures     KAPDisclosure[]
+  ipo                IPO?
+  holdings           Holding[]
+  watchlistItems     WatchlistItem[]
+  priceAlerts        PriceAlert[]
+  orders             Order[]
+  trades             Trade[]
+  leveragedPositions LeveragedPosition[]
+  newsArticles       NewsArticleAsset[]
+  calendarEvents     MarketCalendar[]
 
   @@index([type])
   @@index([marketId])
@@ -570,6 +581,57 @@ model Trade {
 
   @@index([userId])
   @@index([assetId])
+}
+
+enum LeveragedPositionStatus {
+  OPEN
+  CLOSED
+}
+
+/// Why a position stopped being OPEN — surfaced to both the user and the admin "Emirler &
+/// pozisyonlar" view, so a forced liquidation never looks identical to a deliberate close.
+enum LeveragedPositionCloseReason {
+  USER
+  ADMIN
+  LIQUIDATION
+}
+
+/// A leveraged ("margin"/CFD-style) position — entirely separate from Holding, which models
+/// full ownership at 1x. Opening one reserves `margin` out of the matching Wallet currency
+/// bucket (see openLeveragedPosition in leverage-engine.ts); closing it (by the user, an admin,
+/// or automatic liquidation once losses consume the margin — see evaluateLeveragedPositions)
+/// returns margin ± realized P&L to that same bucket. Never talks to a real broker — same
+/// closed-loop ledger as every other trade in this app.
+model LeveragedPosition {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id])
+
+  side         OrderSide
+  quantity     Decimal   @db.Decimal(24, 6)
+  leverage     Int
+  contractSize Decimal   @default(1) @db.Decimal(20, 6)
+  /// Which Wallet balance (cashBalance=TRY or usdBalance=USD) the margin and P&L settle
+  /// against — matches the asset's own currency, same rule the spot engine uses.
+  currency     String
+
+  entryPrice           Decimal        @db.Decimal(20, 6)
+  entryPriceProvenance DataProvenance
+  margin               Decimal        @db.Decimal(24, 6)
+
+  status      LeveragedPositionStatus       @default(OPEN)
+  closePrice  Decimal?                      @db.Decimal(20, 6)
+  realizedPnl Decimal?                      @db.Decimal(24, 6)
+  closeReason LeveragedPositionCloseReason?
+
+  openedAt DateTime  @default(now())
+  closedAt DateTime?
+
+  @@index([userId, status])
+  @@index([assetId])
+  @@index([status])
 }
 
 model Portfolio {

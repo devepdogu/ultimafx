@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Banknote, ArrowLeftRight, Landmark, PieChart, RefreshCcw } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Banknote, ArrowLeftRight, Landmark, PieChart, RefreshCcw, TrendingUp } from "lucide-react";
 import { formatDateTime, formatPrice } from "@/lib/utils/format";
 import type { WalletTransaction, WalletTransactionType } from "@prisma/client";
 
@@ -16,6 +16,8 @@ const ICONS: Record<WalletTransactionType, typeof ArrowDownLeft> = {
   FX_CONVERSION: ArrowLeftRight,
   FUND_PURCHASE: PieChart,
   FUND_REDEMPTION: PieChart,
+  LEVERAGE_OPEN: TrendingUp,
+  LEVERAGE_CLOSE: TrendingUp,
 };
 
 export function RecentActivity({ transactions }: { transactions: WalletTransaction[] }) {

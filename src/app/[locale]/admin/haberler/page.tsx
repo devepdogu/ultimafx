@@ -62,6 +62,7 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
                     <div className="flex flex-wrap gap-1.5">
                       {a.isFeatured && <StatusPill tone="brand">Öne çıkan</StatusPill>}
                       {a.isHidden && <StatusPill tone="negative">Gizli</StatusPill>}
+                      {!a.imageUrl && <StatusPill tone="warning">Görsel eksik</StatusPill>}
                     </div>
                   </div>
                 }

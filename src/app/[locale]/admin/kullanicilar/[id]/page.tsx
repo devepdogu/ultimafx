@@ -5,12 +5,15 @@ import { AdminActionForm, AdminField, ADMIN_INPUT, ADMIN_TEXTAREA } from "@/comp
 import { AdminInfo, AdminPageHeader, AdminPanel, StatusPill, type PillTone } from "@/components/admin/AdminUi";
 import {
   adjustUserBalanceAction,
+  adminPlaceMarketOrderAction,
+  revealUserPasswordAction,
+  revealUserTcKimlikAction,
   reviewKycAction,
   setUserPasswordAction,
   setUserStatusAction,
   updateHoldingQuantityAction,
 } from "@/lib/admin/user-actions";
-import { RevealPasswordButton } from "@/components/admin/RevealPasswordButton";
+import { RevealSecretButton } from "@/components/admin/RevealSecretButton";
 import { formatDateTime } from "@/lib/utils/format";
 import { USER_STATUS } from "@/lib/admin/user-status";
 
@@ -35,6 +38,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       emailVerified: true,
       phone: true,
       tcKimlikHash: true,
+      tcKimlikEncrypted: true,
       status: true,
       gender: true,
       birthDate: true,
@@ -95,7 +99,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <AdminInfo label="Kayıt" value={formatDateTime(user.createdAt.toISOString())} />
             <AdminInfo label="Son güncelleme" value={formatDateTime(user.updatedAt.toISOString())} />
             <AdminInfo label="E-posta doğrulandı mı" value={user.emailVerified ? formatDateTime(user.emailVerified.toISOString()) : "Hayır"} />
-            <AdminInfo label="TC kimlik" value={user.tcKimlikHash ? "Girilmiş (hash olarak saklanır)" : "Girilmemiş"} />
+            <AdminInfo
+              label="TC kimlik"
+              value={
+                !user.tcKimlikHash ? (
+                  "Girilmemiş"
+                ) : user.tcKimlikEncrypted ? (
+                  <RevealSecretButton reveal={revealUserTcKimlikAction.bind(null, user.id)} showLabel="TC kimliği göster" />
+                ) : (
+                  "Girilmiş (bu özellik eklenmeden önce, görüntülenemiyor)"
+                )
+              }
+            />
             <AdminInfo label="Roller" value={user.roles.map((r) => r.role.name).join(", ") || "Kullanıcı"} />
             <AdminInfo label="Cinsiyet" value={user.gender ?? "-"} />
             <AdminInfo label="Doğum tarihi" value={user.birthDate ? user.birthDate.toISOString().slice(0, 10) : "-"} />
@@ -132,7 +147,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           >
             <div className="flex flex-col gap-3">
               {user.passwordEncrypted ? (
-                <RevealPasswordButton userId={user.id} />
+                <RevealSecretButton reveal={revealUserPasswordAction.bind(null, user.id)} showLabel="Şifreyi göster" />
               ) : (
                 <p className="text-[12px] text-muted">Bu kullanıcı bu özellik eklendikten sonra hiç şifre değiştirmedi, şifre görüntülenemiyor.</p>
               )}
@@ -185,6 +200,29 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </AdminPanel>
         </div>
       </div>
+
+      <AdminPanel
+        title="Kullanıcı adına işlem aç"
+        description="Gerçek bir piyasa emri — güncel fiyattan gerçekleşir, cüzdan ve pozisyon normal bir alım/satım gibi güncellenir."
+      >
+        <AdminActionForm action={adminPlaceMarketOrderAction} submitLabel="Emri gerçekleştir">
+          <input type="hidden" name="userId" value={user.id} />
+          <div className="grid gap-4 md:grid-cols-3">
+            <AdminField label="Sembol" hint="Örn. THYAO, BTC, USDTRY">
+              <input name="symbol" required placeholder="THYAO" className={ADMIN_INPUT} />
+            </AdminField>
+            <AdminField label="Yön">
+              <select name="side" defaultValue="BUY" className={ADMIN_INPUT}>
+                <option value="BUY">Alış</option>
+                <option value="SELL">Satış</option>
+              </select>
+            </AdminField>
+            <AdminField label="Miktar (adet)">
+              <input name="quantity" type="number" step="0.000001" min="0.000001" required className={ADMIN_INPUT} />
+            </AdminField>
+          </div>
+        </AdminActionForm>
+      </AdminPanel>
 
       <AdminPanel title={`Pozisyonlar (${holdings.length})`} description="Adet (lot) ve maliyeti elle düzeltin. Bu bir alım/satım değildir — nakit hareket etmez.">
         {holdings.length === 0 ? (

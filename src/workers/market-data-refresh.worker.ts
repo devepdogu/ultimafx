@@ -18,6 +18,7 @@ import { MARKET_DATA_REFRESH_QUEUE, scheduleMarketDataRefresh } from "@/lib/queu
 import { marketDataRegistry } from "@/lib/market-data/registry";
 import { nextManualPrice } from "@/lib/market-data/manual-simulation";
 import { isMarketOpenAt } from "@/lib/market-data/market-hours";
+import { evaluateLeveragedPositions } from "@/lib/trading/leverage-engine";
 import { prisma } from "@/lib/prisma/client";
 
 async function refreshFxQuotes() {
@@ -78,6 +79,13 @@ const worker = new Worker(
     if (job.name === "simulate-manual-prices") {
       const result = await simulateManualPrices();
       console.log(`[worker] simulate-manual-prices: walked ${result.walked} asset(s)`);
+      return result;
+    }
+    if (job.name === "evaluate-leveraged-positions") {
+      const result = await evaluateLeveragedPositions();
+      if (result.liquidated > 0) {
+        console.log(`[worker] evaluate-leveraged-positions: liquidated ${result.liquidated}/${result.checked} open position(s)`);
+      }
       return result;
     }
   },

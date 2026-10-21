@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/emirler/page.tsx": {
-    "mtime": 1791305976.593709,
-    "seen": 1791306102.206531,
-    "ast_hash": "fef7533480b54fedd72ca21ead2ec0de",
+    "mtime": 1792594587.7362194,
+    "seen": 1792594627.266451,
+    "ast_hash": "e131a984c4ccf44ece52f941eb433b91",
     "semantic_hash": ""
   },
   "src/app/[locale]/(app)/haberler/page.tsx": {
@@ -168,9 +168,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/page.tsx": {
-    "mtime": 1791318737.6693463,
-    "seen": 1791319398.7748723,
-    "ast_hash": "b24b80d6be6d63bbb2270677513b26d9",
+    "mtime": 1792593392.3946655,
+    "seen": 1792593550.103152,
+    "ast_hash": "1a00b9595833a2a85d570abe8616acbf",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/para-cekme/page.tsx": {
@@ -228,9 +228,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard/RecentActivity.tsx": {
-    "mtime": 1791318139.5601668,
-    "seen": 1791318267.0569441,
-    "ast_hash": "b91450018cbcd8a76127adb76024187a",
+    "mtime": 1792594177.9568124,
+    "seen": 1792594627.2712548,
+    "ast_hash": "030b6e7be29b19f90c4b6ed7b1dda60c",
     "semantic_hash": ""
   },
   "src/components/dashboard/WatchlistSection.tsx": {
@@ -420,15 +420,15 @@
     "semantic_hash": "b49507d418c12f206f4326fd35150329"
   },
   "src/lib/audit/log.ts": {
-    "mtime": 1792533849.5312564,
-    "seen": 1792534174.0072918,
-    "ast_hash": "c7631da874b6e163529c57326db1d242",
+    "mtime": 1792593764.3504152,
+    "seen": 1792594627.2761912,
+    "ast_hash": "abea23bd008f601a753dc5a59e920013",
     "semantic_hash": ""
   },
   "src/lib/auth/actions.ts": {
-    "mtime": 1792533892.5494857,
-    "seen": 1792534174.007297,
-    "ast_hash": "735afa02822b5d47d0db894232420775",
+    "mtime": 1792593709.9874308,
+    "seen": 1792594627.2762766,
+    "ast_hash": "963da9a21271cd34cb5ed59a486bf9cc",
     "semantic_hash": ""
   },
   "src/lib/auth/auth.ts": {
@@ -594,9 +594,9 @@
     "semantic_hash": "1085a67d634e9079cb254c332d3dc64d"
   },
   "src/lib/queue/market-data-queue.ts": {
-    "mtime": 1792529075.3671713,
-    "seen": 1792529136.7971103,
-    "ast_hash": "1ca4977cccaf5697bf311c920a0d5c69",
+    "mtime": 1792594216.3746278,
+    "seen": 1792594627.2793632,
+    "ast_hash": "41e3535ab352198bf08b502121332ca9",
     "semantic_hash": ""
   },
   "src/lib/trading/actions.ts": {
@@ -606,15 +606,15 @@
     "semantic_hash": ""
   },
   "src/lib/trading/engine.ts": {
-    "mtime": 1791305954.2620082,
-    "seen": 1791306102.219107,
-    "ast_hash": "b46e339af1b3ecbf3b46e1922285ba8d",
+    "mtime": 1792594106.2566757,
+    "seen": 1792594627.2798464,
+    "ast_hash": "fec3b97815a26be82525e458a80ba841",
     "semantic_hash": ""
   },
   "src/lib/trading/errors.ts": {
-    "mtime": 1791305927.2671137,
-    "seen": 1791306102.2191083,
-    "ast_hash": "caf5f9a3ccb3788fb86990e5cd0548a1",
+    "mtime": 1792594111.8733869,
+    "seen": 1792594627.2798474,
+    "ast_hash": "cf613b463b2f19485dda7802a9ea98c6",
     "semantic_hash": ""
   },
   "src/lib/trading/schemas.ts": {
@@ -666,9 +666,9 @@
     "semantic_hash": "b8c9600a61a35ca743d948c332abb223"
   },
   "src/workers/market-data-refresh.worker.ts": {
-    "mtime": 1792532987.111426,
-    "seen": 1792533108.1839826,
-    "ast_hash": "e83a521f308c86385b0a675d2727a87d",
+    "mtime": 1792594210.3387265,
+    "seen": 1792594627.2807038,
+    "ast_hash": "fa0977323d4b8d1a008f760e06403ba4",
     "semantic_hash": ""
   },
   "tsconfig.json": {
@@ -720,9 +720,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/haberler/page.tsx": {
-    "mtime": 1791319840.041851,
-    "seen": 1791319938.1576521,
-    "ast_hash": "ba93e685da7c546196732cd97b1bef01",
+    "mtime": 1792593478.8248422,
+    "seen": 1792593550.102759,
+    "ast_hash": "c14d90e8adb0b61006872858e4009409",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/varliklar/page.tsx": {
@@ -1716,9 +1716,9 @@
     "semantic_hash": ""
   },
   "src/components/news/NewsList.tsx": {
-    "mtime": 1791293630.3599963,
-    "seen": 1791293658.0853047,
-    "ast_hash": "ce67a943d5c0570b05724a9e39fa5be0",
+    "mtime": 1792593470.1366968,
+    "seen": 1792593550.1074462,
+    "ast_hash": "7ffec2344da113ffea14f31868d62d2d",
     "semantic_hash": ""
   },
   "src/lib/news/feed.ts": {
@@ -1830,9 +1830,9 @@
     "semantic_hash": ""
   },
   "src/components/trading/TradeTerminal.tsx": {
-    "mtime": 1791305976.593709,
-    "seen": 1791306102.213182,
-    "ast_hash": "026351515f3f11481b99710de0dabde4",
+    "mtime": 1792594562.5335877,
+    "seen": 1792594627.2734308,
+    "ast_hash": "fdacfe257fde871fc7b4b69c0fd278e9",
     "semantic_hash": ""
   },
   "src/components/ui/Toaster.tsx": {
@@ -2070,9 +2070,9 @@
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/[id]/page.tsx": {
-    "mtime": 1792534109.89407,
-    "seen": 1792534173.9811225,
-    "ast_hash": "57ed7460569e91a3aa22324ffe219f78",
+    "mtime": 1792593796.3334968,
+    "seen": 1792594627.2685006,
+    "ast_hash": "efc999a3ba00fcd58572531575248c21",
     "semantic_hash": ""
   },
   "src/app/[locale]/admin/kullanicilar/page.tsx": {
@@ -2100,9 +2100,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/AdminShell.tsx": {
-    "mtime": 1791319909.8741703,
-    "seen": 1791319938.1585042,
-    "ast_hash": "511bf219e97f0bcad32cd8896d2dfa92",
+    "mtime": 1792594383.3051205,
+    "seen": 1792594627.2695978,
+    "ast_hash": "6fd35166256d5f1bb17403550e05b442",
     "semantic_hash": ""
   },
   "src/components/admin/AdminUi.tsx": {
@@ -2166,9 +2166,9 @@
     "semantic_hash": ""
   },
   "src/lib/admin/user-actions.ts": {
-    "mtime": 1792533846.3102913,
-    "seen": 1792534174.006998,
-    "ast_hash": "e38acbaeb5a8af81cdafcc5abec6e295",
+    "mtime": 1792593760.7905357,
+    "seen": 1792594627.2761216,
+    "ast_hash": "e2f2373ed490b38a6827c75e19c5bc2e",
     "semantic_hash": ""
   },
   "src/lib/admin/user-status.ts": {
@@ -2442,9 +2442,9 @@
     "semantic_hash": ""
   },
   "deploy.sh": {
-    "mtime": 1792413760.6440773,
-    "seen": 1792414681.1021032,
-    "ast_hash": "92eee81b6ad4598634c98664469b156a",
+    "mtime": 1792573023.370567,
+    "seen": 1792593550.0997527,
+    "ast_hash": "1578c0f5249daae28bfa082ccd83db0f",
     "semantic_hash": ""
   },
   "src/lib/market-data/manual-simulation.ts": {
@@ -2459,16 +2459,58 @@
     "ast_hash": "38e2e4fada99ddca2926f36951774907",
     "semantic_hash": ""
   },
-  "src/components/admin/RevealPasswordButton.tsx": {
-    "mtime": 1792534087.7134533,
-    "seen": 1792534173.9855046,
-    "ast_hash": "13eebca48ab73eb6cf5eb9f9a4071215",
-    "semantic_hash": ""
-  },
   "src/lib/crypto/secret-box.ts": {
     "mtime": 1792533950.9611256,
     "seen": 1792534174.0097961,
     "ast_hash": "6d15bec9cec5e9c9ca5392e597dd23fb",
+    "semantic_hash": ""
+  },
+  "update.sh": {
+    "mtime": 1792572992.065693,
+    "seen": 1792593550.1177537,
+    "ast_hash": "415ff3fa22288b4201cf7bff89062aaa",
+    "semantic_hash": ""
+  },
+  "src/app/[locale]/admin/pozisyonlar/page.tsx": {
+    "mtime": 1792594360.8337576,
+    "seen": 1792594627.2688673,
+    "ast_hash": "a476605aced68da6ffdd87c1b781862c",
+    "semantic_hash": ""
+  },
+  "src/components/admin/AutoRefresh.tsx": {
+    "mtime": 1792594296.2975442,
+    "seen": 1792594627.269686,
+    "ast_hash": "cf0a88170bf85a36f9f2dc54c89a0c0f",
+    "semantic_hash": ""
+  },
+  "src/components/admin/RevealSecretButton.tsx": {
+    "mtime": 1792593724.247207,
+    "seen": 1792594627.270318,
+    "ast_hash": "0e3916e6a3a6677f1e943d637e9f8a7d",
+    "semantic_hash": ""
+  },
+  "src/lib/admin/leverage-actions.ts": {
+    "mtime": 1792594255.01021,
+    "seen": 1792594627.275914,
+    "ast_hash": "b7d4974ef1c81d32b2258a10ab9c5bbb",
+    "semantic_hash": ""
+  },
+  "src/lib/trading/leverage-actions.ts": {
+    "mtime": 1792594197.2238562,
+    "seen": 1792594627.2798493,
+    "ast_hash": "8523a2d1189b8f6be05d770bd354e116",
+    "semantic_hash": ""
+  },
+  "src/lib/trading/leverage-constants.ts": {
+    "mtime": 1792594427.4519038,
+    "seen": 1792594627.2798505,
+    "ast_hash": "f5f43e45dda02df97a824fddfa7f2c19",
+    "semantic_hash": ""
+  },
+  "src/lib/trading/leverage-engine.ts": {
+    "mtime": 1792594443.5002527,
+    "seen": 1792594627.2798514,
+    "ast_hash": "22e9393014637ab75feebb762d4906dd",
     "semantic_hash": ""
   }
 }

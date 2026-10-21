@@ -14,6 +14,8 @@ import {
   placeMarketOrderAction,
   type TradeActionResult,
 } from "@/lib/trading/actions";
+import { closeLeveragedPositionAction, placeLeveragedOrderAction } from "@/lib/trading/leverage-actions";
+import { MAX_LEVERAGE } from "@/lib/trading/leverage-constants";
 import { isAssetSessionOpen, sessionHoursLabel } from "@/lib/trading/session";
 import { cn } from "@/lib/utils/cn";
 import { formatChangePercent } from "@/lib/utils/format";
@@ -52,6 +54,22 @@ export interface TerminalOrder {
   status: string;
 }
 
+export interface TerminalLeveragedPosition {
+  id: string;
+  assetId: string;
+  symbol: string;
+  type: AssetType;
+  logoUrl: string | null;
+  currency: string;
+  side: "BUY" | "SELL";
+  quantity: number;
+  entryPrice: number;
+  leverage: number;
+  margin: number;
+  currentPrice: number | null;
+  pnl: number | null;
+}
+
 interface TradeTerminalProps {
   asset: TerminalAsset;
   price: number | null;
@@ -63,6 +81,7 @@ interface TradeTerminalProps {
   heldQuantity: number;
   positions: TerminalPosition[];
   orders: TerminalOrder[];
+  leveragedPositions: TerminalLeveragedPosition[];
   initialSide?: "BUY" | "SELL";
   loggedIn: boolean;
   pickerAssets: PickerAsset[];
@@ -87,7 +106,7 @@ const pfmt = (v: number | null) => (v == null ? "—" : priceFmt.format(v));
 const fmtMoney = (v: number | null, currency: string) => (v == null ? "—" : `${money.format(v)} ${currency}`);
 
 export function TradeTerminal(props: TradeTerminalProps) {
-  const { asset, price, bid, ask, changePercent, cashBalance, balanceCurrency, heldQuantity, positions, orders, loggedIn, pickerAssets } = props;
+  const { asset, price, bid, ask, changePercent, cashBalance, balanceCurrency, heldQuantity, positions, orders, leveragedPositions, loggedIn, pickerAssets } = props;
   const router = useRouter();
   const [mode, setMode] = useState<"MARKET" | "LIMIT">("MARKET");
   const [side, setSide] = useState<"BUY" | "SELL">(props.initialSide ?? "BUY");
@@ -95,8 +114,10 @@ export function TradeTerminal(props: TradeTerminalProps) {
   const step = isWhole ? 1 : 0.01;
   const [quantity, setQuantity] = useState(step);
   const [limitPrice, setLimitPrice] = useState("");
-  const [tab, setTab] = useState<"positions" | "orders">("positions");
+  const [leverage, setLeverage] = useState(1);
+  const [tab, setTab] = useState<"positions" | "leveraged" | "orders">("positions");
   const [closeConfirmId, setCloseConfirmId] = useState<string | null>(null);
+  const [closeLevConfirmId, setCloseLevConfirmId] = useState<string | null>(null);
   const toast = useToast();
   const [pending, startTransition] = useTransition();
 
@@ -105,6 +126,7 @@ export function TradeTerminal(props: TradeTerminalProps) {
   const sellPrice = bid ?? price;
   const refPrice = mode === "LIMIT" ? parsedLimit : side === "BUY" ? buyPrice : sellPrice;
   const positionValue = refPrice != null ? quantity * refPrice : null;
+  const requiredMargin = positionValue != null ? positionValue / leverage : null;
   const maxQty = useMemo(() => {
     if (side === "SELL") return heldQuantity;
     return refPrice && refPrice > 0 ? Math.floor((cashBalance / refPrice) * (isWhole ? 1 : 100)) / (isWhole ? 1 : 100) : 0;
@@ -136,12 +158,25 @@ export function TradeTerminal(props: TradeTerminalProps) {
     fd.set("quantity", String(quantity));
     startTransition(async () => {
       let res: TradeActionResult;
-      if (mode === "MARKET") {
+      if (mode === "MARKET" && leverage > 1) {
+        fd.set("leverage", String(leverage));
+        res = await placeLeveragedOrderAction({}, fd);
+      } else if (mode === "MARKET") {
         res = await placeMarketOrderAction({}, fd);
       } else {
         fd.set("limitPrice", limitPrice.replace(",", "."));
         res = await placeLimitOrderAction({}, fd);
       }
+      if (res.error) toast.error(res.error);
+      else if (res.success) toast.success(res.success);
+      router.refresh();
+    });
+  }
+
+  function closeLeveraged(positionId: string) {
+    setCloseLevConfirmId(null);
+    startTransition(async () => {
+      const res = await closeLeveragedPositionAction(positionId);
       if (res.error) toast.error(res.error);
       else if (res.success) toast.success(res.success);
       router.refresh();
@@ -195,7 +230,7 @@ export function TradeTerminal(props: TradeTerminalProps) {
           </div>
           <div className="flex gap-1.5">
             <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-muted">{TYPE_LABEL[asset.type] ?? "Varlık"}</span>
-            <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-muted">1x</span>
+            <span className="rounded-md bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-muted">{leverage}x</span>
           </div>
         </div>
       </header>
@@ -206,7 +241,10 @@ export function TradeTerminal(props: TradeTerminalProps) {
             <button
               key={m}
               type="button"
-              onClick={() => setMode(m)}
+              onClick={() => {
+                setMode(m);
+                if (m === "LIMIT") setLeverage(1); // leveraged limit orders aren't supported yet
+              }}
               className={cn(
                 "h-9 rounded-full text-[13px] font-semibold transition-all",
                 mode === m ? "bg-surface text-foreground shadow-sm" : "text-muted"
@@ -308,10 +346,43 @@ export function TradeTerminal(props: TradeTerminalProps) {
           </div>
         </div>
 
+        {mode === "MARKET" && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4">
+            <div className="flex items-center justify-between text-[12px] font-semibold text-muted">
+              <span>Kaldıraç</span>
+              <span>1x - {MAX_LEVERAGE}x</span>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {[1, 2, 5, 10].map((lv) => (
+                <button
+                  key={lv}
+                  type="button"
+                  onClick={() => setLeverage(lv)}
+                  className={cn(
+                    "h-9 rounded-full text-[13px] font-semibold transition-colors",
+                    leverage === lv ? "bg-brand text-brand-foreground" : "bg-surface-2 text-foreground"
+                  )}
+                >
+                  {lv}x
+                </button>
+              ))}
+              <input
+                inputMode="numeric"
+                value={leverage}
+                onChange={(e) => {
+                  const v = Math.round(Number(e.target.value));
+                  if (Number.isFinite(v)) setLeverage(Math.min(MAX_LEVERAGE, Math.max(1, v)));
+                }}
+                className="num-tabular h-9 rounded-full bg-surface-2 text-center text-[13px] font-semibold text-foreground outline-none"
+              />
+            </div>
+          </div>
+        )}
+
         <div className="divide-y divide-border rounded-2xl border border-border bg-surface px-4">
           <SummaryRow label="Pozisyon değeri" value={fmtMoney(positionValue, asset.currency)} />
-          <SummaryRow label="Gerekli marjin" value={fmtMoney(positionValue, asset.currency)} />
-          <SummaryRow label="Kaldıraç" value="1x" />
+          <SummaryRow label="Gerekli marjin" value={fmtMoney(requiredMargin, asset.currency)} />
+          <SummaryRow label="Kaldıraç" value={`${leverage}x`} />
           <SummaryRow label="Kullanılabilir bakiye" value={fmtMoney(cashBalance, balanceCurrency)} tone="positive" />
         </div>
 
@@ -337,12 +408,15 @@ export function TradeTerminal(props: TradeTerminalProps) {
           <p className="text-center text-[12px] text-muted">Bu varlıkta işlem yapılamaz.</p>
         )}
 
-        <div className="grid grid-cols-2 gap-1 rounded-full bg-surface-2 p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-full bg-surface-2 p-1">
           <TabButton active={tab === "positions"} onClick={() => setTab("positions")}>
-            Açık Pozisyonlar ({positions.length})
+            Pozisyonlar ({positions.length})
+          </TabButton>
+          <TabButton active={tab === "leveraged"} onClick={() => setTab("leveraged")}>
+            Kaldıraçlı ({leveragedPositions.length})
           </TabButton>
           <TabButton active={tab === "orders"} onClick={() => setTab("orders")}>
-            Bekleyen Emirler ({openOrders.length})
+            Emirler ({openOrders.length})
           </TabButton>
         </div>
 
@@ -360,6 +434,25 @@ export function TradeTerminal(props: TradeTerminalProps) {
                   onRequestClose={() => setCloseConfirmId(p.assetId)}
                   onCancelClose={() => setCloseConfirmId(null)}
                   onConfirmClose={() => closePosition(p.assetId)}
+                />
+              ))}
+            </div>
+          ))}
+
+        {tab === "leveraged" &&
+          (leveragedPositions.length === 0 ? (
+            <Empty text="Açık kaldıraçlı pozisyon bulunmuyor" />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {leveragedPositions.map((p) => (
+                <LeveragedPositionCard
+                  key={p.id}
+                  position={p}
+                  pending={pending}
+                  confirming={closeLevConfirmId === p.id}
+                  onRequestClose={() => setCloseLevConfirmId(p.id)}
+                  onCancelClose={() => setCloseLevConfirmId(null)}
+                  onConfirmClose={() => closeLeveraged(p.id)}
                 />
               ))}
             </div>
@@ -560,6 +653,95 @@ function PositionCard({
             style={{ background: `linear-gradient(90deg, #E8305A, ${SELL}, #FF6B8A)` }}
           >
             Kapat
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LeveragedPositionCard({
+  position: p,
+  pending,
+  confirming,
+  onRequestClose,
+  onCancelClose,
+  onConfirmClose,
+}: {
+  position: TerminalLeveragedPosition;
+  pending: boolean;
+  confirming: boolean;
+  onRequestClose: () => void;
+  onCancelClose: () => void;
+  onConfirmClose: () => void;
+}) {
+  const pnlPercent = p.pnl != null && p.margin > 0 ? (p.pnl / p.margin) * 100 : null;
+  const pnlTone = p.pnl == null ? "text-muted" : p.pnl >= 0 ? "text-positive" : "text-negative";
+  const sideColor = p.side === "BUY" ? BUY : SELL;
+  const money2 = (v: number | null) => (v != null ? priceFmt.format(v) : "—");
+
+  return (
+    <div className="flex flex-col rounded-2xl border border-border bg-surface">
+      <div className="flex items-start gap-3 p-4">
+        <AssetIcon symbol={p.symbol} type={p.type} logoUrl={p.logoUrl} size={44} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] font-bold text-foreground">{p.symbol}</span>
+            <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: sideColor }}>
+              {p.side === "BUY" ? "ALIŞ" : "SATIŞ"}
+            </span>
+            <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold text-muted">1:{p.leverage}</span>
+          </div>
+          <div className="num-tabular text-[12px] text-muted">
+            {p.quantity} adet · Teminat: {money2(p.margin)} {p.currency}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className={cn("num-tabular text-[15px] font-bold", pnlTone)}>
+            {p.pnl != null ? `${p.pnl >= 0 ? "+" : ""}${priceFmt.format(p.pnl)}` : "—"}
+          </div>
+          <div className={cn("num-tabular text-[12px] font-semibold", pnlTone)}>
+            {pnlPercent != null ? formatChangePercent(pnlPercent) : "—"}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 border-t border-border px-4 py-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[11px] text-muted">Giriş</span>
+          <span className="num-tabular text-[13px] font-semibold text-foreground">{money2(p.entryPrice)}</span>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[11px] text-muted">Güncel</span>
+          <span className="num-tabular text-[13px] font-semibold text-foreground">{money2(p.currentPrice)}</span>
+        </div>
+      </div>
+
+      <div className="border-t border-border p-3">
+        {confirming ? (
+          <div className="grid grid-cols-2 gap-1.5">
+            <button type="button" onClick={onCancelClose} disabled={pending} className="h-10 rounded-xl bg-surface-2 text-[12px] font-semibold text-foreground disabled:opacity-50">
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              onClick={onConfirmClose}
+              disabled={pending}
+              className="h-10 rounded-xl text-[12px] font-bold text-white disabled:opacity-50"
+              style={{ background: SELL }}
+            >
+              {pending ? "Gönderiliyor…" : "Kapatmayı onayla"}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onRequestClose}
+            disabled={pending}
+            className="h-10 w-full rounded-xl text-[13px] font-bold text-white disabled:opacity-50"
+            style={{ background: `linear-gradient(90deg, #E8305A, ${SELL}, #FF6B8A)` }}
+          >
+            Pozisyonu kapat
           </button>
         )}
       </div>

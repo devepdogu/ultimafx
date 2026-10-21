@@ -59,6 +59,7 @@ export async function registerAction(_prev: ActionResult, formData: FormData): P
   }
 
   const tcKimlikHash = hashTcKimlik(tc);
+  const tcKimlikEncrypted = encryptSecret(tc);
   const existing = await prisma.user.findFirst({
     where: { OR: [{ tcKimlikHash }, { phone }] },
     select: { id: true },
@@ -81,6 +82,7 @@ export async function registerAction(_prev: ActionResult, formData: FormData): P
       name,
       phone,
       tcKimlikHash,
+      tcKimlikEncrypted,
       passwordHash,
       passwordEncrypted,
       termsAcceptedAt: now,
