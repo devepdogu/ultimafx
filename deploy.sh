@@ -11,9 +11,10 @@
 #
 # Safe to re-run: it installs Docker only if missing, and only ever *creates*
 # .env if one doesn't already exist — an existing production .env (and its
-# secrets) is never touched or regenerated on a later run. Re-running just
-# rebuilds the images and redeploys (migrate → seed runs again too, but every
-# seed write is an upsert by a unique key, so that's always safe).
+# secrets) is never touched or regenerated on a later run. For a routine code
+# update on an already-installed server, use ./update.sh instead — it also
+# pulls the latest commit first and refuses to redeploy app/worker if the
+# migration step fails, instead of rolling out onto a half-migrated database.
 set -euo pipefail
 
 DOMAIN="${1:-}"
@@ -144,7 +145,7 @@ log "Done."
 echo "  Status:   ${SUDO:+sudo }docker compose ps"
 echo "  Logs:     ${SUDO:+sudo }docker compose logs -f app worker"
 echo "  Re-seed:  ${SUDO:+sudo }docker compose run --rm migrate"
-echo "  Update:   git pull && ./deploy.sh"
+echo "  Update:   ./update.sh"
 if [ -z "${APP_UP:-}" ]; then
   warn "The app didn't answer within the wait window — it may still be starting. Check: docker compose logs app"
 fi
